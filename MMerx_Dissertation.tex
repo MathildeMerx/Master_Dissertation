@@ -1,0 +1,865 @@
+\documentclass[11pt]{article}
+
+\usepackage[a4paper,left=1in,right=1in,top=1in,bottom=1in]{geometry}
+\usepackage{helvet}
+
+\usepackage{setspace}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\graphicspath{ {./Images/} }
+\usepackage{subcaption}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=cyan,
+}
+
+\setlength{\parindent}{4em}
+\setlength{\parskip}{1em}
+\usepackage{xcolor}
+\definecolor{light-gray}{gray}{0.95}
+\newcommand{\code}[1]{\colorbox{light-gray}{\texttt{#1}}}
+
+\urlstyle{same}
+\renewcommand{\familydefault}{\sfdefault}
+
+
+\begin{document}
+
+\begin{onehalfspace}
+
+
+\title{%
+Images Analysis of Time Series\\
+\large Dissertation Methodology}
+\date{{\today}}
+\author{MERX Mathilde}
+
+\maketitle 
+
+\tableofcontents
+
+
+\pagebreak
+
+\section{Literature review}
+
+\subsection{Algorithmic Financial Trading with Deep Convolutional Neural Networks: Time Series to Image Conversion Approach, \textit{by Omer Berat Sezer, Ahmet Murat Ozbayoglua}, 2018}
+
+LOOK AT THE SECTION "RELATED WORK" for my own introduction.
+
+15 diﬀerent technical indicators each with diﬀerent parameter selections are utilized. Each indicator instance generates data for a 15 day period. As a result, 15x15 sized 2-D images are constructed. 
+
+The applications of deep neural networks on ﬁnancial forecasting models have been very limited. CNN models were mostly used, whereas they're commonly used for computer vision.
+
+Each image is labelled "Sell" (highest point overall the 15 data points), "Buy" (lowest point overall the 15 data points) or "Hold" elsewise. Since Hold is much more frequent, it made the algorithm less accurate when used on "Sell" or "Buy" data. 
+
+\subsection{Deep Learning and Time Series-to-Image Encoding for Financial Forecasting, \textit{by Barra et al.}, 2020}
+
+Classification-based models have better results in forecasting than regression-based models.
+
+Prediction on the S\&P500 index only, with CNNs and GADF.Then, tested against the buy\&hold strategy. 
+
+They create their images by aggregating the data in 4 different ways (1-hour, 4-hours, 8-hours and 20- hours intervals) and assembling the 4 images hence obtained: right/left top/bottom corner. Advise a small network, because else there may be overfitting (simplified version of the VGG-16 and no ResNet34 for instance). Conv layers activated by ReLU, softmax for the classification layer.
+
+Label: 1 if the next day opening is higher than the current day closing, 0 otherwise.
+
+IDEA: TAKE 4 DATA PER DAY (i.e. min, max, opening, closing), 16 DAYS IN A ROW, then assemble the 4 images hence obtained: right/left top/bottom corner.
+
+They used 20 CNNs to predict by or sell, with different initialization methods and seeds. If too many networks disagree, they just hold. That is to avoid the initialization problems only one network would entail.
+
+They outperformed B\&H, whatever the 7-year period (event 2009-2016, a very profitable period).
+
+\subsection{Deep-Gap: A deep learning framework for forecasting crowdsourcing supply/demand gap based on imaging time series and residual learning, \textit{by Said and Erradi}, 2019}
+
+They use GADF, GASF and RP in CNN to forecast the supply/demand gap in crowdsourcing. Only two layers, to avoid the overfitting a bigger network 
+might entail. ReLU between layers as well.
+
+\subsection{Duality between Time Series and Networks, \textit{Campanharo et al.}, 2011}
+
+Explains how to go from time series to a network, with a transition matrix. The first example is the MTF. They use 20 quantiles for 320 time stamps, so maybe not a good idea for my case? Necessity to use stationary data.
+
+\subsection{Encoding Temporal Markov Dynamics in Graph for Visualizing and Mining Time Series, \textit{Liu and Wang}, 2018}
+
+MTF represents the temporality evolution of our time series. The main diagonal of the matrix shows the small changes, whereas the top right and bottom left corners show the massive changes. A MTF image helps understand the volatility of the stock.
+
+\subsection{Extracting Texture Features for Time Series Classiﬁcation, \textit{Souza, Silva and Batista}, 2014}
+
+They used a recurrence plot, using the definition with the Heaviside function.
+
+IDEA FOR MY DISSERTATION: USE MORLET WAVELETS. show different RP for different kind of time series (random noise, random walk, and periodic functions for instance).
+
+Using feature extraction to grasp the texture of the RP. For instance, some kind of wavelet transform (Gabor).
+
+Eventually, they did classification with SVM.
+
+\subsection{Encoding Time Series as Images for Visual Inspection and Classiﬁcation Using Tiled Convolutional Neural Network, \textit{by Want and Oates}, 2015}
+
+Tiled CNN for small datasets.
+
+GAF interesting because bijective. $G = \tilde{X}' \tilde{X} - \sqrt{I - \tilde{X^2}} '\sqrt{I - \tilde{X^2}}$, where $\tilde{X}$ is the row vector of the rescaled time series, and $I$ is the unit row vector.
+
+I HAVE THE CODE FOR THE NN (ResNet)
+
+MTF doesn't work as well as GAF, has a bigger error rate, probably because its inverse is not clear. 
+
+\subsection{Imaging Time-Series to Improve Classiﬁcation and Imputation, \textit{by Wang and Oates}, 2015}
+
+GAF is bijective, and  provides a way to preserve temporal dependency. They cumulated GASF (cosines of the sum), GADF (sinus of the difference) and MTF as the three channels of an image.
+
+At the last layer of the Tiled CNN, they used a linear soft margin SVM. Images have no "edges" or "angles", that's why Tiled CNN are preferred to CNNs.
+
+They use auto-encoders to extract features from time series.
+
+\subsection{Forecasting with time series imaging, \textit{by Li, Kang and Li}, 2020}
+
+RP, then the bag-of-features model calculates the distribution characteristics of feature points in the whole image and then generates a global histogram. 
+
+It's feature extraction. CNN are compared to BoF. They seem to work better.
+
+\subsection{SAX-VSM: Interpretable Time Series Classiﬁcation Using SAX and Vector Space Model, \textit{by Senin and Malinchik}, 2013}
+
+Nearest neighbor algorithm is simple, accurate and robust, depends on a very few parameters and requires no training. However, the 1NN technique has a number of signiﬁcant disadvantages: inability to offer any insight into the classiﬁcation results, needs for a signiﬁcantly large training set representing a within-class variance in order to achieve desired accuracy, computationally expensive. 
+
+Bag of patterns model to characterize the TS.
+
+\subsection{Time series classification through visual pattern recognition, \textit{by Jastrzebska}, 2019}
+
+Encoding the TS to a 2D array: $(z_1, dz_1), ..., (z_n, dz_n)$ where $dz_n = z_n - z_{n-1}$. Hence using the first derivative of the data.
+
+Only plotting the TS is no good idea: too many pixels carry no information. So we want images where each pixel is fully loaded with info, but as light as possible for computational reason.
+
+\subsection{How much information is contained in a recurrence plot?, \textit{by Thiel, Romano and Kurths}, 2004}
+
+They use only black and white (no grey scale: Heaviside function), because of image size. To criticize! We want to use ReLU. Threshold $\epsilon$ for the noise. Their purpose is to reconstruct the TS from the RP. MY IDEA (see paper 1.7): The inverse of a RP can be rather well estimated, so it can explain why it works well in CNNs.
+
+\subsection{Time Series Classiﬁcation Using Compression Distance of Recurrence Plots, \textit{by Silva, Souza and Batista}, 2013}
+
+Distances are massively used to compare two time series: the Euclidian distance, and the DTW (dynamic time warping). We can make an analogy between RP and the frequency analysis of sound.
+
+10\% of the biggest value can be a good threshold for the RP.
+
+TODO: COMPARE MY FINAL ALGORITHM WITH 1NN - DTW distance METHOD (with the gain: $\frac{accuracy(method_{new})}{accuracy(method_{1NN})})$.
+
+\subsection{Time Series Classification Using Multi-Channels
+Deep Convolutional Neural Networks, \textit{by Zheng et al.}, 2014}
+
+Compared to 1-NN with DTW, the traditional feature-based classification methods are usually more efficient but less effective.
+
+\subsection{Tiled convolutional neural networks, \textit{by Le et al.}, 2010}
+
+CNNs have tied weights, which makes them trainable with much fewer data than other network. However, because of the way weights are tied, CNNs can only capture translational invariances, and not rotations for instance. Hence, instead of hard coding the translational invariances, it is better to le the network learn the invariances on its own, with for instance a tile weight tying scheme.
+
+A tiled CNN constrains all units that are $k$ steps away to each other to be tied. When $k=1$, we have a CNN, when $k=+\infty$, we have an united layer.
+
+\pagebreak
+
+\section{Introduction}
+
+Prediction has interested mankind for millenniums: as early as 3,000BC, Indians were trying to develop meteorology \cite{meteo}. Indeed, knowing the future temperatures and precipitations were needed for the crops. As society became more complex and more specialized, new jobs have required new types of forecasting. For instance merchants need to predict their sales, electrical engineers need to predict the electricity demand, and so on. 
+
+It can be noted that all these objects of prediction (temperature, sales, electricity demand) can be translated into numbers which depend on time. That is what time series are: data (figures) indexed on time. As we've just noticed, time series forecasting is an area of great interest, in many different fields. In our case, we'll focus on time series forecasting in a financial context, and more precisely \textbf{forecasting the next day stock value of each S\&P500 company}.
+
+There are many different tools for time series forecasting: mathematical and statistical analysis, among which ARIMA, regressions, curve fitting, Bayesian analysis, etc. \cite{campanharo}. Unfortunately, these methods have their limits. One of the biggest is that they often fail to predict market surges or falls. A possible explanation is that most econometric models are made under the assumptions data are stationary, and follow a Gaussian \cite{arima}. 
+
+Another (expending) tool used for time series forecasting is Machine Learning. In this case, people mostly use Long-Short Term Memory layers, or Convolutional Neural Network \cite{conv_lstm}. In both cases (statistical analysis and Machine Learning), data commonly used for forecasting are the raw data: the numbers. However, it is interesting to note that a time series can also be described in images. For instance, the plot (or graphic) of the time series is an image. In our case, we have decided to focus on imaging techniques of time series.
+
+We want to focus on this graphical dimension because nowadays, highly efficient computer vision algorithms are made. For instance, on the MNIST dataset (a classification problem of hand-written digits), an accuracy of over 99.70\% has been reached. It means when shown a hand-written digit (between 0 and 9), over 99.70\% of the time the algorithm will make a correct inference! 
+
+Since there are very powerful computer vision algorithms, we have decided to try and exploit their strengths. As stated earlier, there is a very famous way of translating a time series into an image: the plot. Unfortunately, even though this representation is very telling for us, humans, it has a great default: it carries scarcely any info compared with its size \cite{jastrzebska}. For each column of pixels in the image, only one pixel is activated. For a 32$\times$32 pixel image, it means only a little bit more than 3\% of the pixels carry information!
+
+Consequently, if we are to forecast time series by using an image representation, we will need and find another type of image. An idea is to highlight the time dependency of the data. For instance, if at time $t_1$ a stock price is $x_{t_1} = X$ and at time $t_2$ the same stock price is $x_{t_2} = X$ as well, then what is the probability of $x_{t_1 + 1} = x_{t_2 + 1}$? This is the general idea of the Markov Transition Fields \cite{wang}. Other imaging techniques will be discussed later on.
+
+Using images of time series should improve the forecasting for two reasons: first, imaging time series is a way to transform them, and maybe reveal some features (for instance time dependencies). Second, image classification algorithms are known as among the best Machine Learning algorithms nowadays. Thus we want to try and adapt our problem so that we can use these algorithms.
+
+Even though time series forecasting is considered a regression problem, we can translate it to a classification problem. For instance, for stock price forecasting, a reliable algorithm inferring whether the stock price will increase or decrease tomorrow can be all that is needed. And this is just a regular binary classification algorithm. 
+
+The purpose in this Dissertation is:
+
+\begin{enumerate}
+    \item To describe relevant imaging techniques to translate time series into images
+    \item To describe a relevant classification Machine Learning algorithm inferring whether the time series will increase (or decrease) the next day
+    \item To evaluate the results on out-of-sample data
+\end{enumerate}
+
+In the next part, we will analyse the \nameref{sect_littrev} available on the matter "imaging time series to improve time series forecasting". Then, we will explain the \nameref{methodo} used to carry the research out. Afterwards, we will present our \nameref{results}, and carry out a \nameref{discuss} about them. Eventually, there will be the \nameref{concl} of this Dissertation.
+
+\pagebreak
+
+\section{Literature Review}
+
+\label{sect_littrev}
+
+The subject of this Dissertation is stock price forecasting. The idea is to image time series (the stock price), then use a binary classification algorithm to infer whether the stock price will increase or decrease the next day. The main steps are:
+
+\begin{enumerate}
+    \item Data preprocessing -- choosing the time series to use and making them stationary (see \nameref{sec:LR_preprocess})
+    \item Translating the time series into images (see \nameref{sec:LR_image})
+    \item Choosing a classification algorithm (see \nameref{sec:LR_classif})
+    \item Evaluating the performances of the model (see \nameref{sec:LR_eval})
+\end{enumerate}
+
+In the remainder of this section, $x_t$ represents the value at time $t$ of the time series (usually stock prices) we want to image. $M$ is the matrix of the told image, and its coefficients $M_{i,j}$ are the pixels values. $M_{i,j}$ is the value of the $i$-th row and $j$-th column element of matrix $M$. $M$ has a size $(n \times n), n \in \mathbb{N}$.
+
+\subsection{Defining the values of our time series}
+\label{sec:LR_preprocess}
+
+Stock price forecasting is usually carried out by using the last price before the end of the closing day: the closing price. Then, the time series thus obtained are made stationary, and those are the data used in forecasting algorithms.
+
+Barra et al. \cite{barra}, who were focusing on improving time series imaging techniques, had a very interesting and novel idea. Instead of using just one time series (for instance the closing price: $x_t,...,x_T$), they suggested defining four different time series. Then they made one image for each time series, and eventually aggregated these four images in one image (each corner being the image of one time series). 
+
+Their definition for these four time series was the following: the values were actually the stock prices of a \emph{unique} company (so they only used the values of the time series $x_t,...,x_T$: they didn't introduce any new other company stock price, or macro economic data). The difference between the time series resided in the time laps between each value of the time series. The first time series was the value of the company stock collected every hour ($x_t, x_{t+1}, ...$), in the second one the values were collected every 4 hours ($x_t, x_{t + 4},...$), every 8 hours for the third image ($x_t, x_{t + 8}, ...$), and eventually every day for the fourth one ($x_t, x_{t + 24}, ...$). Barra et al. claimed it is a way to highlight different periods and trends in the company stock price. 
+
+About using stationary time series, Kwiatkowski et al. \cite{stationary} advise using a transformation of the time series, so as to make it stationary. The idea is to obtain a time series which joint probability distribution does not change when shifted in time. This results in the mean and the variance (among other) not depending on time. The different transformations they suggest testing are the first or second differentiate (using $x_t - x_{t-1}$ or $x_t - x_{t-2}$ instead of $x_t$), the logarithm ($\log(x_t)$), or a combination of both ($\log(x_t) - \log(x_{t-1})$). 
+
+The latter is particularly useful when imaging time series: this way, the values dealt with are not the stock price, but (the logarithm of) its evolution percentage. With this method, companies which stock price are especially expensive won't be considered differently than companies which stock are cheap, whereas it would be the case with the first or second differentiate.
+
+When wondering what data to use, there are two suggestions to remember from these papers:
+
+\begin{itemize}
+    \item Instead of using just one time series, trying and finding several time series to describe the stock price
+    \item Instead of using the raw stock price, trying and making the time series stationary
+\end{itemize}
+
+\subsection{Imaging time series techniques}
+\label{sec:LR_image}
+
+Once the preprocessing of the time series has been decided of, the next step is imaging the time series. What techniques can be used? In 2019, Jastebska \cite{jastrzebska} highlighted the impossibility to simply plot the function $f(t) = x_t$ where $t$ is the time and $x_t$ the time series. Indeed, for each column of pixels only one would give information, whereas it is preferred to \emph{maximize} the level of information per pixel. Hence, the idea is to operate some calculus revealing specific aspects of the time series, put the results in a matrix, and plot it as an image.
+
+\subsubsection{Recurrence plot and wavelet transform}
+
+The recurrence plot (RP) is the first imaging technique which will de discussed. Historically, a RP was an image described by the matrix: 
+
+\begin{equation}
+    M_{i,j} = \begin{cases}
+        1 & \text{if } x_i = x_j \\
+        0 & \text{else}
+    \end{cases}
+\end{equation}
+
+As we can see, this was only coding a black and white image. Then, a more sophisticated variance emerged: $M_{i,j} = \Theta(\epsilon - |x_i - x_j|)$, where $ \Theta $ is the Heaviside function ($\Theta(x) = 1$ if $x \geq 0$, else $\Theta(x) = 0$. $\epsilon$ is a constant to determine. This variance gives a grey scale image. Below are different RP for different types of time series: a gaussian (or white) noise in Figure \ref{fig:white_noise}, a random walk with white noise in Figure \ref{fig:random_walk}, and a periodic signal in Figure \ref{fig:periodic}. One can clearly see patterns in the RP of the periodic signal, whereas that of the white noise is much more erratic.
+
+\begin{figure}[h!]
+    \centering
+    \captionsetup{justification=centering}
+    \begin{subfigure}{0.4\textwidth}
+        \includegraphics[width=6cm]{plot_noise.PNG}
+        \caption{Regular plot}
+        \label{fig:}
+    \end{subfigure}
+    \begin{subfigure}{0.4\textwidth}
+        \includegraphics[width=6cm]{rp_noise.PNG}
+        \caption{Recurrence plot}
+    \end{subfigure}
+    \caption{Plot and recurrence plot of white noise (100 samples)}
+    \label{fig:white_noise}
+\end{figure}
+
+\begin{figure}[h!]
+    \centering
+    \captionsetup{justification=centering}
+    \begin{subfigure}{0.4\textwidth}
+        \includegraphics[width=6cm]{plot_walk.PNG}
+        \caption{Regular plot}
+    \end{subfigure}
+    \begin{subfigure}{0.4\textwidth}
+        \includegraphics[width=6cm]{rp_walk.PNG}
+        \caption{Recurrence plot}
+    \end{subfigure}
+    \caption{Plot and recurrence plot of a random walk with white noise 
+    \label{fig:random_walk}(100 samples)}
+\end{figure}
+
+\begin{figure}[h!]
+    \centering
+    \captionsetup{justification=centering}
+    \begin{subfigure}{0.4\textwidth}
+        \includegraphics[width=6cm]{plot_periodic.PNG}
+        \caption{Regular plot}
+    \end{subfigure}
+    \begin{subfigure}{0.4\textwidth}
+        \includegraphics[width=6cm]{rp_periodic.PNG}
+        \caption{Recurrence plot}
+    \end{subfigure}
+    \caption{Plot and recurrence plot of a periodic signal (100 samples)}
+    \label{fig:periodic}
+\end{figure}
+
+
+The use of RP is quite old. In 2004, Thiel, Romano and Kurths \cite{thiel} were already suggesting using RP to represent time series. They were only using the old black and white version because it was giving lighter images (bit wise) than the grey scale version. They wanted to represent time series in images, and then being able to reconstruct the time series from the image. This idea of bijectivity between the time series and the image is fundamental for effective classification algorithm, as we will see in subsection \ref{gaf}. 
+
+As time went on, and memory became less of a problem, researchers used more the Heaviside version of the RP: Senin and Malinchik in 2013; Silva, Souza and Batista in 2013 \cite{silva} and again (Souza, Silva and Batista) in 2014 \cite{souza}, Zheng et al in 2014 \cite{zheng}, Said and Erradi in 2019 \cite{senin}, and eventually Li, Kang and Li in 2020 \cite{li}. All of them ware using RP to image time series, for different reasons (usually classifying time series, but it could as well be feature extraction, or data reconstruction).
+
+One great quality of the RP is underlined in each of these articles: it is a powerful feature highlighter. Silva, Souza and Batista \cite{silva} compare RP to frequency analysis when dealing with sound. However, when using RP for classification purposes, Zheng et al. \cite{zheng} explain it is more efficient, but less effective than Dynamic Time Warping (an algorithm used to compare two time series). So as to increase RP effectiveness in classification, Souza, Silva and Batista \cite{souza} used Gabor wavelets. This is a type of wavelet transform, which enables feature highlighting in an image. Using these wavelets answers to many researchers, who noticed RP weren't always highlighting time series patterns enough: Li, Kang and Li \cite{li}, or Senin and Malinchik \cite{senin}. 
+
+Eventually, Silva, Souza and Batista \cite{silva} focus on the $\epsilon$ term of the RP defined with Heaviside function. They explain it should be used as a threshold so as to get rid of the noise: they suggest the definition $\epsilon = 0.1 \times \max\limits_t x_t$.
+
+\subsubsection{Markov Transition Field}
+
+This is the second imaging technique which will be discussed about. 
+
+In 2011, Campanharo et al \cite{campanharo} wanted to encode time series into networks. To that extend, they needed a transition matrix: the Markov Transition Field (MTF). The general idea of the MTF is to answer the question: "If $x_i = x_j$ for some $i,j$, what is the chance that $x_{i+1} = x_{j+1}$?". 
+
+The mathematical definition of the MTF is the following one: let $n$ be the size of the MTF, and $p$ the number of samples from our time series we will be using ($x_t,...,x_{t+p-1}$). Then, we create the sequence $(q_i)$, where $(q_i)_{i \in [1;n-1]}$ are the $n-1$ $n$-quantiles, and $q_0 = \min\limits_j x_i$, $q_n = \max\limits_j x_i$. For each sample of our time series: $x_j / j \in [t;t+p-1]$, we assign the value $X_j = \max\limits_{i \in [|0;n|]} \{ i / q_i \leq x_j\}$. $X_j$ represents $x_j$ quantile bin. Eventually, the coefficients of the MTF will be: $M_{i,j} = \sum\limits_{k=1}^{n} P(X_k = j | X_{k-1} = i)$. In words, this is the conditional probability that when a sample is in the bin $i$, the next sample will be in the bin $j$. Hence we directly have $\sum\limits_{i=0}^{n-1} M_{i,j} = 1$. 
+
+The MTF was only supposed to be a transition matrix (its name is telling in that regard), but it has been used on its own. Indeed, in 2015, Wang and Oates published a series of articles (among which \cite{wang} and \cite{wang_encod}) using MTF for time series classification. They explain this encoding technique helps representing the temporal evolution of the time series. Around the main diagonal of the MTF, we can see the small changes of the time series, whereas in the top-right and bottom-left corner we can see the massive changes. Hence, MTF representation helps highlight the volatility of the stock. 
+
+Said and Erradi \cite{said} then used this idea in 2019 to forecast a time series: the supply/demand gap in crowdsourcing. The use of MTF in their algorithm deep-gap gave them better results than with the LSTM architecture (RMSE of 11\% against 16\%), or even ARIMA (RMSE 11\% against 13\%).
+
+However, Campanharo et al. \cite{campanharo} advised using a lot of data samples compared to the matrix size (for instance $n = 20$ and $p = 320$), which isn't realistic: in our case, it would require over a yea of data to make a simple prediction! Hence, Wang and Oates \cite{wang_encod} suggested using MTF with \nameref{gaf}.
+
+\subsubsection{Gramian Angular Field}
+\label{gaf}
+
+In 2015, Wang and Oates (\cite{wang_encod} and \cite{wang}) created a new imaging technique: the Gramian Angular Field (GAF). Here is its definition: first, we need to rescale our time series ($x_t, ..., x_{t+n-1}$) from -1 to 1. Let $m_+ = \max\limits_{i \in [t; t+n-1]} x_t$, and $m_- = \min\limits_{i \in [t; t+n-1]} x_t$. We create the sequence $X_i = \frac{2 \times x_i - m_+ - m_-}{m_+ - m_-}$, and $X_i \in [-1;1], \forall i$. Then, we create the sequence $\phi_i = \arccos(X_i)$. Since $X_i \in [-1;1]$ this is possible, and $\phi_i \in [0;\pi], \forall i \in [t;t+n-1]$. Eventually, for $M$ the matrix of the GAF, $M_{i,j} = \cos(\phi_i + \phi_j)$.
+
+This representation has many advantages. First, it is bijective: the main diagonal is enough to find back the sequence $(X_i)$, and having only two values of the stock between $t$ and $t+n-1$ is enough to have all the values $x_t, ..., x_{t+n-1}$. Wang and Oates stress the importance of having "bijective" imaging techniques: algorithms have much better results than with images with which the time series can't be found back. Second, the GAF encodes some features of the time series: the correlation (in the coefficients $M_{i,j / |i-j| = k}$ we have the relative correlation by superposition of direction with respect to time interval $k$).
+
+On their own, training classification algorithms with GAF gave rather positive results, depending on the time series used. Trained on electrocardiogram data for instance, Wang and Oates \cite{wang_encod} obtained 11\% error rate, compared with 21\% for the MTF. However, what brought even better results, was using GAF and MTF together, as several color channels of the image. In that case, Wang and Oates \cite{wang} obtained a 9\% error rate, still on the electrocardiogram dataset.
+
+This idea of different images superposed as channels of the image has been re-used several times: for instance, Said and Erradi tried in 2019 \cite{said} to superpose GAF and RP images.
+
+\subsection{Classification techniques}
+\label{sec:LR_classif}
+
+Barra et al. \cite{barra} wanted to forecast the S\&P500 index. Their purpose was to have an algorithm predicting whether the index would increase or decrease the next day. Since they didn't have a lot of data, they stated having one very deep network would be too prone to overfitting. Hence, they wanted having limited size models (for instance a simplified version of VGG-16, and not ResNet34). This architecture being chosen, they didn't want the results to depend on the initialization: they wanted to ensure a proper convergence of their algorithm. So as to address this problem, they decided training \emph{20} models, each of them having the same architecture but a different initialization. Then, if more than $n$\% of the models agree on "increase" or "decrease", it is the overall prediction. Else, the overall prediction is "unsure". $n$ is an hyperparameter, $50 \leq n \leq 70$. Berat Sezer and Ozbayoglua \cite{berat} tried using directly three classes ("increase", "decrease" and "stagnate"), but their algorithm tended to forecast stagnation too often (it had a recall of 55\% - see \ref{sec:LR_eval}). Barra et al. \cite{barra} had more promising results, which will be detailed in \ref{sec:LR_eval}.
+
+Their simplified version of VGG-16 Barra et al. used is constituted by 5 CNN layers, and a fully connected one. Indeed, CNN are a type of network commonly used for image classification. In 2010, Le et al. \cite{le} suggested an improvement of the CNN: the tiled CNN. In a CNN, the image is abstracted to a feature map in which all the weights are tied together. The idea of Tiled CNN is to only tie weights which are $k$ steps from each other ($k$ being an hyper parameter). When $k = 1$, it becomes a regular CNN. 
+
+Tiled CNN let more the model learn by itself: instead of hard-coding the translational invariances, the network will find them out on its own. Wang and Oates \cite{wang} used Tiled CNN to obtain more successful classification algorithm. However the code they suggest today is that of a simplified ResNet, with regular CNN layers. They only use a dozen of CNN layers, with the same intention as Barra et al.'s: avoiding overfitting. 
+
+\subsection{Evaluating the model}
+\label{sec:LR_eval}
+
+In this article \cite{ouannes}, Ouannès explains the most basic evaluation for classification is the accuracy: $\frac{n_{well}}{n_{tot}}$, where $n_{well}$ is the number of prediction the algorithm got right, and $n_{tot}$ is the total number of prediction made by the algorithm. Unfortunately, this metric isn't always relevant: if one class is abundantly more represented than the other(s), the accuracy would be very high if the algorithm was to always predict this very class, which is not the outcome we want. Hence, we need new metrics: the precision $P$ and the recall $R$. For a binary classification (0 or 1), let:
+
+\begin{itemize}
+    \item $T_0$ be the number of 0 correctly predicted
+    \item $T_1$ be the number of 1 correctly predicted
+    \item $F_0$ be the number of 0 the algorithm mistakenly predicted as 1
+    \item $F_0$ be the number of 1 the algorithm mistakenly predicted as 0
+\end{itemize}
+
+Then, $R = \frac{T_0}{T_0 + F_1}$: that is the percentage of 0 that are rightly predicted by the algorithm (recall). $P = \frac{T_0}{T_0 + F_0}$: that is the percentage of times the algorithm is right when it predicts 0 (precision). This is a first way, numeric, to evaluate one algorithm.
+
+Barra et al. \cite{barra} also suggested a more financial evaluation: comparing the predictions of their algorithm with the Buy\&Hold strategy. The idea is the following: many great investors (among which Warren Buffett) emphasize the best strategy when doing long term trading is to constitute a diversified portfolio, and then keep the values of this portfolio for as long as possible. For instance, despite the 2008 crisis and the coronavirus outbreak, the S\&P500 index has more than doubled between 2007 and today. Hence, for their testing data, Barra et al. compared these two strategies:
+
+\begin{itemize}
+    \item Buying a share of the S\&P500 at the beginning of the testing period, hold on to it, and see its value at the end of the period
+    \item When the algorithm predicts "increase", buy a long action (buy a share of the index, then sell it before the market closes). When the algorithm predicts "decrease", buy a short action (sell a share of the index, then buy it before the market closes). If the algorithm predicts "unsure", do nothing. 
+\end{itemize}
+
+What they noticed is that their strategy (relying on their algorithm) was on average better than the Buy\&Hold strategy. Furthermore, when they were doing poorer than Buy\&Hold, it was only a little bit, whereas when they were doing better it was with a much bigger margin. 
+
+\pagebreak
+
+\section{Methodology}
+\label{methodo}
+
+In this dissertation, we aim at forecasting time series, using image classification algorithms. Our time series will be S\&P500 company stock price. The steps or this methodology are:
+
+\begin{enumerate}
+    \item Downloading the time series data
+    \item Imaging the time series (the imaging techniques are the subject of this dissertation)
+    \item Training a classification algorithm (more precisely a binary classification: whether the stock price will increase or decrease)
+    \item Evaluating this model (are we satisfied with the forecasting we obtain?)
+\end{enumerate}
+
+\subsection{Data collection}
+
+The purpose is to have a lot of data. Indeed, Machine Learning algorithms require massive amounts of data for the training. So as to constitute a large dataset, the S\&P500 is very interesting: one year of stock price history represents around 125,000 samples!
+
+The data used are 377 of the S\&P500 505\footnote{In the S\&P500, there are 500 companies, which issued a total of 505 common stocks.} common stock prices, from January 1st 2010 until December 31st 2015 for the training part, and from January 1st 2015 until December 31st 2019 for the testing part.
+
+\subsubsection{Company names}
+
+So as to obtain the name of the 505 common stocks from the S\&P500, one can use the list from Wikipedia \cite{500names}. It'll be necessary to do some web scraping (using python library \code{BeautifulSoup}) to obtain the common stock symbols\footnote{The CSS class we are interested in is "\textit{external text}".}. 
+
+The 505 symbols can be found in the Appendix \ref{505}, as well as the 373 common stocks used in this dissertation. 
+
+\subsubsection{Downloading the stock prices}
+
+The stock prices can be downloaded from Yahoo Finance, using the function \code{DataReader} from the Python library \code{pandas\_datareader.data}.
+
+We have now obtained four different time series per common stock:
+
+\begin{itemize}
+    \item The maximum reached every trading day
+    \item The minimum reached every trading day
+    \item The price at the opening of the trading day
+    \item The price at the closing of the trading day
+\end{itemize}
+
+These time series begin on January 1st, 2010 and end on December 31st 2019.
+
+We want to obtain stationary data\cite{stationary}, which those time series are not. Furthermore, we're interested in the evolution of the stock price, and not just in its value: an increase by 10\% is meaningful whatever the price, whereas a stock gaining 10\$ does not mean the same whether the stock costs 10\$ or 300\$. Hence, the following transformation is made: for each time series $(x_t)$, we will use the first difference of the logarithm: $\left(\log\left(\frac{x_t}{x_{t+1}}\right)\right)$. Hence, when we will talk about a time series, it will be meant the first differentiate of the logarithm.
+
+
+\subsection{Imaging the time series}
+
+In this subsection, we will detail the imaging techniques. There are three of them, and the three (grayscale) images obtained will be used as the three channels of the final image. 16 trading days data will be used to constitute one image.
+
+For each technique, we will make four small images (16x16 pixels): one for the time series of the maxima, one for the time series of the minima, one for the time series of the opening prices, and one for the time series of the losing prices. Then, we will concatenate these four images into a big one (32x32 pixels). This image will be one (out of three) channels of the final image. Here are the next steps:
+
+\begin{enumerate}
+    \item Detailing how to obtain a recurrence plot, and then making the wavelet transform of the recurrence plot
+    \item Detailing the Markov Transition Field
+    \item Detailing the Gramian Angular Field
+    \item Stacking the three images as channels to constitute the final image
+\end{enumerate}
+
+When it will be mentioned a time series $X_t$, without loss of generality, it could be the time series of the maxima, minima, opening or closing prices. 
+
+\subsubsection{Recurrence plot and wavelet transform}
+
+This section contains four parts:
+
+\begin{enumerate}
+    \item How to make a recurrence plot
+    \item How to make a wavelet transform
+    \item The concatenation of the wavelet transforms
+    \item The concatenation of the wavelet transforms of each recurrence plot 
+\end{enumerate}
+
+For $t \in [0; T-15]$, we take the time series $X_t, ..., X_{t+15}$. It represent 16 days of data of a common stock price.
+
+\noindent \textbf{First, let's explain how to make a recurrence plot of this time series.}
+
+Let $M_t = \max\limits_{k \in [t;t+31]} X_k$, and $\epsilon = M_t * 0.1$. We compute the recurrence plot $R_{i,j} = \Theta (\epsilon - |X_i - X_j|)$, with $\Theta$ the Heaviside function. We rescale the recurrence plot so that it uses all shades of grey from white to black. That is, for $M = \max\limits_{i,j} R_{i,j}$ and $m = \min\limits_{i,j} R_{i,j}$, we do $R_{i,j} \leftarrow \frac{R_{i,j} - m }{M - m }$. 
+
+In our case, for each $t \in [0; T-15]$, we have four recurrence plots (one for the opening, closing, maximum, and minimum prices). In Figure \ref{fig:rec_plot} are some examples of recurrence plots, using the stock price of the company Snap-on, from January, 4th 2010 until January, 27th 2010 (which represents 16 trading days). 
+
+\begin{figure}[h!]
+    \centering
+    \captionsetup{justification=centering}
+    \begin{subfigure}{0.24\textwidth}
+        \includegraphics[width=0.95\linewidth]{rp_open.PNG}
+        \caption{Opening prices}
+    \end{subfigure}
+    \begin{subfigure}{0.24\textwidth}
+        \includegraphics[width=0.95\linewidth]{rp_close.PNG}
+        \caption{Closing prices}
+    \end{subfigure}
+    \begin{subfigure}{0.24\textwidth}
+        \includegraphics[width=0.95\linewidth]{rp_max.PNG}
+        \caption{Maximum prices}
+    \end{subfigure}    
+    \begin{subfigure}{0.24\textwidth}
+        \includegraphics[width=0.95\linewidth]{rp_min.PNG}
+        \caption{Minimum prices}
+    \end{subfigure}
+    \caption{Recurrence plots of four time series representing the company Snap-on between January, 4th and 27th, 2010}
+    \label{fig:rec_plot}
+\end{figure}
+
+\noindent \textbf{Second, let's explain how to make one wavelet transform (for each of our four recurrence plots).}
+
+Now we need to compute the wavelet transform of these recurrence plots. It will be a way to highlight the texture of our recurrence plots. A wavelet transform reveals texture in four preferred directions: the vertical, the horizontal and both diagonal. Hence, we obtain four different images when computing the wavelet transform. Figure \ref{fig:wave_transf} is an example of the four textures given by wavelet transform on the recurrence plot of the opening prices of Snap-on.
+
+\begin{figure}[h!]
+    \centering
+    \captionsetup{justification=centering}
+    \begin{subfigure}{0.24\textwidth}
+        \includegraphics[width=0.95\linewidth]{wt_lH.PNG}
+        \caption{Vertical texture}
+    \end{subfigure}
+    \begin{subfigure}{0.24\textwidth}
+        \includegraphics[width=0.95\linewidth]{wt_HL.PNG}
+        \caption{Horizontal texture}
+    \end{subfigure}    
+    \begin{subfigure}{0.24\textwidth}
+        \includegraphics[width=0.95\linewidth]{wt_ll.PNG}
+        \caption{Main diagonal texture}
+    \end{subfigure}
+    \begin{subfigure}{0.24\textwidth}
+        \includegraphics[width=0.95\linewidth]{wt_HH.PNG}
+        \caption{Second diagonal texture}
+    \end{subfigure}
+    \caption{Four different textures given by the wavelet transform on the recurrence plot of the opening rice of Snap-on between January, 4th and 27th, 2010}
+    \label{fig:wave_transf}
+\end{figure}
+
+In this case, the \textit{biorthogonal wavelet} has been used. Indeed, this kind of wavelet:
+
+\begin{itemize}
+    \item Can be used with discrete data
+    \item Captures the texture equally well in all directions (horizontal, vertical and both diagonals)
+    \item The image obtained with this kind of wavelet is four time smaller (here 8x8 pixels) than the initial image (here 16x16 pixels), which serves our purpose
+\end{itemize}
+
+\noindent \textbf{Third, let's concatenate the wavelet transforms }
+
+For each recurrence plot, we obtain four wavelet transforms (revealing horizontal, vertical and diagonal textures). Furthermore, one wavelet transform image is four times smaller than the recurrence plot it describes. Hence, we can concatenate all four wavelet images and obtain a 16x16 pixels wavelet image representing one recurrence plot. In Figure \ref{fig:wave_concat} are the concatenated wavelet transforms each four recurrence plot from Figure \ref{fig:rec_plot}. 
+
+\begin{figure}[h!]
+    \centering
+    \captionsetup{justification=centering}
+    \begin{subfigure}{0.24\textwidth}
+        \includegraphics[width=0.95\linewidth]{wt_open.PNG}
+        \caption{Opening prices}
+        \label{fig:open_concat}
+    \end{subfigure}
+    \begin{subfigure}{0.24\textwidth}
+        \includegraphics[width=0.95\linewidth]{wt_close.PNG}
+        \caption{Closing prices}
+    \end{subfigure}
+    \begin{subfigure}{0.24\textwidth}
+        \includegraphics[width=0.95\linewidth]{wt_high.PNG}
+        \caption{Maximum prices}
+    \end{subfigure}    
+    \begin{subfigure}{0.24\textwidth}
+        \includegraphics[width=0.95\linewidth]{wt_low.PNG}
+        \caption{Minimum prices}
+    \end{subfigure}
+    \caption{Concatenate of the four textures given by the wavelet transform on four different wavelet transforms from Figure \ref{fig:rec_plot}}
+    \label{fig:wave_concat}
+\end{figure}
+
+\noindent \textbf{Fourth, let's concatenate the wavelet transforms of all four time series }
+
+We have now obtained four 16x16 pixel images: one for each time series (opening, closing, minimum and maximum prices). Each image is the concatenation of four wavelet transform image (which were 8x8 pixels). We will now concatenate the four 16x16 pixel images of the wavelet transform so as to obtain one 32x32 pixel image (Figure \ref{fig:wt}). This image is the wavelet transforms (four texture) of the recurrence plots (from four time series). In this case, the data used are those of the company Snap-on, between January 4th and 27th, 2010. 
+
+\begin{figure}[h!]
+     \centering
+     \captionsetup{justification=centering}
+     \includegraphics[width=7cm]{wt_CONCAT.PNG}
+     \caption{Wavelet transform of the recurrence plot of Snap-on, between January 4th and 27th, 2010}
+\label{fig:wt}
+\end{figure}
+
+This image is the first channel of the final picture. In \nameref{sec:mtf}, we will detail how to obtain the second channel.
+
+\subsubsection{Markov Transition Field}
+\label{sec:mtf}
+
+\textit{\textbf{Reminder}: $X_k, k \in [t, t+15]$ are the values of our time series -- either the opening, closing, maximum or minimum price of the trading day.}
+
+This section details how to obtain the second channel image: using the Markov Transition Field (MTF). This section contains parts:
+
+\begin{enumerate}
+    \item How to make the MTF
+    \item The meaning of each coefficient
+    \item The concatenation of four MTF
+\end{enumerate}
+
+\noindent \textbf{First, let's detail how to make a MTF.}
+
+For each value $X_k, k \in [t, t+15]$ we will associate its rank $r_k$. $r_k = 16$ means $X_k$ is the smallest of the $X_k, k \in [t, t+15]$, and $r_k = 1$ means $X_k$ is the biggest. Then, for $\#A$ the cardinal of an ensemble $A$, we compute the matrix $M_{i,j} = \# \{r_{k+1} = j \cap r_k = i \}$.Eventually, in the matrix, we divide each column by the sum of its elements.
+
+\noindent \textbf{Second, let's explain the meaning of the MTF coefficients.}
+
+One coefficient $M_{i,j}$ represents the probability that an element would be the $j$-th bigger of the time series knowing that the element the day before was the $i$-th bigger of the time series. Figure \ref{fig:mtf4} represents the MTF of the opening, closing, maximum and minimum stock price of Snap-on, for every trading day between January 4th and 27th, 2010.
+
+\begin{figure}[h!]
+    \centering
+    \captionsetup{justification=centering}
+    \begin{subfigure}{0.24\textwidth}
+        \includegraphics[width=0.95\linewidth]{mtf_open.PNG}
+        \caption{Opening prices}
+        \label{fig:open_concat}
+    \end{subfigure}
+    \begin{subfigure}{0.24\textwidth}
+        \includegraphics[width=0.95\linewidth]{mtf_close.PNG}
+        \caption{Closing prices}
+    \end{subfigure}
+    \begin{subfigure}{0.24\textwidth}
+        \includegraphics[width=0.95\linewidth]{mtf_high.PNG}
+        \caption{Maximum prices}
+    \end{subfigure}    
+    \begin{subfigure}{0.24\textwidth}
+        \includegraphics[width=0.95\linewidth]{mtf_low.PNG}
+        \caption{Minimum prices}
+    \end{subfigure}
+    \caption{MTF of four different time series: the stock price of Snap-on between January 4th and January 27th 2010}
+    \label{fig:mtf4}
+\end{figure}
+
+\noindent \textbf{Third, let's concatenate the four MTF.}
+
+Like before, we have four different images representing one company stock prices during 16 trading days: one for the opening prices, one for the closing prices, one for the maximum prices, and one for the minimum prices. We concatenate them, so as to form one unique bigger image: see Figure \ref{fig:mtf_concat}. This image is 32x32 pixels, it is the second channel of our final image. In \nameref{sec:gaf}, we will detail how to obtain the second channel.
+
+\begin{figure}[h!]
+    \centering
+    \captionsetup{justification=centering}
+    \includegraphics[width=7cm]{mtf_concat.PNG}
+    \caption{MTF of Snap-on, between January 4th and 27th, 2010}
+\label{fig:mtf_concat}
+\end{figure}
+
+\subsubsection{Gramian Angular Field}
+\label{sec:gaf}
+
+\textit{\textbf{Reminder}: $X_k, k \in [t, t+15]$ are the values of our time series -- either the opening, closing, maximum or minimum price of the trading day.}
+
+This section details how to obtain the third and last channel image: using the Gramian Angular Field (GAF). This section contains parts:
+
+\begin{enumerate}
+    \item Rescaling the data
+    \item Making the GAF
+    \item The concatenation of four GAF
+\end{enumerate}
+
+\noindent \textbf{First, let's rescale our data.}
+
+Let $M_t = \max\limits_{k \in [t;t+31]} X_k$, and $m_t = \min\limits_{k \in [t;t+31]} X_k$. Using the function $f_t(x) = \frac{2 x - (M_t + m_t)}{M_t - m_t}$, we rescale all $X_t$ between -1 and 1. Sometimes, values may be rounded above 1 or below -1, so double checking is important here (with an \code{if} statement: if the rescaled value is above 1 or below -1, then we assign it the value 1 or -1). That is important because we will then compute the arccosines of each value, and arccosines is not defined below -1 or above 1.
+
+\noindent \textbf{Second, let's make the GAF.}
+
+Then, we compute the arccosines of each value: $\phi_k = \arccos(f_t(X_k))$. Now, we can create the GAF matrix: $G_{i,j} = \cos(\phi_i + \phi_j)$. Figure \ref{fig:gaf4} shows the GAF of Snap-on with time series between January 4th and January 27th 2010.
+
+\begin{figure}[h!]
+    \centering
+    \captionsetup{justification=centering}
+    \begin{subfigure}{0.24\textwidth}
+        \includegraphics[width=0.95\linewidth]{gaf_open.PNG}
+        \caption{Opening prices}
+        \label{fig:open_concat}
+    \end{subfigure}
+    \begin{subfigure}{0.24\textwidth}
+        \includegraphics[width=0.95\linewidth]{gaf_close.PNG}
+        \caption{Closing prices}
+    \end{subfigure}
+    \begin{subfigure}{0.24\textwidth}
+        \includegraphics[width=0.95\linewidth]{gaf_high.PNG}
+        \caption{Maximum prices}
+    \end{subfigure}    
+    \begin{subfigure}{0.24\textwidth}
+        \includegraphics[width=0.95\linewidth]{gaf_low.PNG}
+        \caption{Minimum prices}
+    \end{subfigure}
+    \caption{GAF of four different time series: the stock price of Snap-on between January 4th and January 27th 2010}
+    \label{fig:gaf4}
+\end{figure}
+
+\noindent \textbf{Third, let's concatenate the four GAF.}
+
+Like before, we have four images representing one company stock prices during 16 trading days: one for the opening prices, one for the closing prices, one for the maximum prices, and one for the minimum prices. We concatenate them, so as to form one unique bigger image: see Figure \ref{fig:gaf_concat}. This image is 32x32 pixels, it is the third and last channel of our final image. 
+
+\begin{figure}[h!]
+    \centering
+    \captionsetup{justification=centering}
+    \includegraphics[width=7cm]{gaf_concat.PNG}
+    \caption{GAF of Snap-on, between January 4th and 27th, 2010}
+\label{fig:gaf_concat}
+\end{figure}
+
+\subsubsection{Aggregating all three images}
+
+We now have three images: the wavelet transform of the recurrence plots, the Markov Transition Field, and the Gramian Angular Field. They are all in shades of grey. The last step is to make an image of the aggregation of these three image, each being considered a channel (like in an RGB image). In Figure \ref{fig:3channels} you can see the three images in greyscale, and in Figure \ref{fig:final_image} you can see the stacking of all three channels. 
+
+\begin{figure}[h!]
+    \centering
+    \captionsetup{justification=centering}
+    \begin{subfigure}{0.32\textwidth}
+        \includegraphics[width=1\linewidth]{wt_CONCAT.PNG}
+        \caption{Wavelet transform of the recurrence plot}
+        \label{fig:open_concat}
+    \end{subfigure}
+    \begin{subfigure}{0.32\textwidth}
+        \includegraphics[width=1\linewidth]{mtf_concat.PNG}
+        \caption{Markov Transition Field}
+    \end{subfigure}
+    \begin{subfigure}{0.32\textwidth}
+        \includegraphics[width=1\linewidth]{gaf_concat.PNG}
+        \caption{Gramian Angular Field}
+    \end{subfigure}    
+    \caption{GAF of four different time series: the stock price of Snap-on between January 4th and January 27th 2010}
+    \label{fig:3channels}
+\end{figure}
+
+\begin{figure}[h!]
+    \centering
+    \captionsetup{justification=centering}
+    \includegraphics[width=7cm]{total_image.PNG}
+    \caption{RP, MTF and GAF as the three channels using the stock price of Snap-on, between January 4th and 27th, 2010}
+\label{fig:final_image}
+\end{figure}
+
+We have now built \textit{one} image: that of the company Snap-on between January 4th and 27th, 2010. The same must be done with all the companies on which data has been gathered, between January 1st 2010 and December 31st 2019.
+
+\subsubsection{Statistics}
+
+We now have our image dataset finished. We have 457,528 days of stock prices between January 1st, 2010 and December 31st, 2014 for 377 companies. We have 554,556 days of stock prices between January 1st, 2015 and December 31st, 2019 for 447 companies. It means we have a little more testing data than training data. In \nameref{sec:meth_eval}, it will be explained how to deal with this issue. 
+
+\subsection{Classification algorithm}
+
+\subsubsection{Labels}
+
+The dataset being done, we need to attribute labels to our images. We want to know if on next day at the opening of the trading day, the stock price will be higher or lower than on current day at the closing of the trading day. Hence, this is a classification problem. To each image, we assign the label 1 (if an increase will arrive next day) or 0 (else).
+
+\subsubsection{Architecture}
+
+When they first wrote their article on imaging time series to classify them \cite{wang}, Wang and Oates (2015) suggested using Tiled CNN. This is a type of CNN invented in 2010 \cite{le} by Le et al. which does not hard code translational invariances, but let the neural network learn them on its own. However, the code which can be found today about Wang and Oates article does not use Tiled CNN, but ResNet. This more recent neural network has shown conclusive results for image classification problems. A ResNet is a neural network which layers are not all connected: some layers are jumped. 
+
+Hence,the architecture used is a ResNet with 12 CNN (we don't want a too big network, to avoid overfitting). For that, we use the \href{https://github.com/cauchyturing/UCR_Time_Series_Classification_Deep_Learning_Baseline/blob/master/ResNet.py}{code} from Wang and Oates \cite{wang}. The structure of a ResNet12 can be seen in Figure \ref{fig:resnet12}. This network begins with two CNN and max pooling layers, then there are 5 ResNet blocks (with the structure of connections jumping layer), and it finishes with one average pooling, and a fully connected layer.
+
+\begin{figure}[h!]
+     \centering
+     \captionsetup{justification=centering}
+     \includegraphics[width=10cm]{resnet12.PNG}
+     \caption{Structure of ResNet12 - image from Choi, Ryu and Kim \cite{choi}}
+\label{fig:resnet12}
+\end{figure}
+
+Eventually, we have to train our model. To that extend, we'll split the dataset into 3 groups: the training, the validation and the testing sets. The training and validation datasets are the stock prices from January 1st, 2010 until December 31st, 2014 (with the training data being 70\% of these data). The testing dataset is the stock prices from January 1st 2015, until December 31st, 2019. The evaluation will be explained in next section.
+
+
+\subsubsection{Evaluation}
+\label{sec:meth_eval}
+
+6 models with the architecture described above are created. Their difference will be the initialization of their CNN layers: see Table \ref{table:initialization}. The initialization of a layer is the distribution law used to set the initial value of each weight (before the fitting). The initialization can change a lot the final outcome of the algorithm, that is why it is important to try different initializations.
+
+\begin{table}[h!]
+    \begin{center}
+        \begin{tabular}{ | c | c |}
+            \hline
+            \textbf{Name} & \textbf{Initialization} \\ 
+            \hline \hline
+            Model 1 & Random normal \\  \hline
+            Model 2 & Glorot normal \\  \hline
+            Model 3 & Uniform \\  \hline
+            Model 4 & He normal \\  \hline
+            Model 5 & LeCun Uniform \\  \hline
+            Model 6 & Orthogonal \\  
+            \hline
+        \end{tabular}
+    \end{center}
+    \caption{Initialization method for each model}
+    \label{table:initialization}
+\end{table}
+
+First, each of these six models will be evaluated individually. The idea is the following: on January 1st 2015, the algorithm is given \$1,000. Then every day it predicts whether the S\&P500 index should increase of decrease the next day. If it is sure enough, it invests a part of its money on the index (either with a long or short action). Else, it does nothing (that is an idle action). On December 31st, 2019, we see how much money it has left. Here are the mathematical details: 
+
+\begin{enumerate}
+    \item Initially, the algorithm is given: $m_0 = \$1,000$ (and $m_t$ is the money the algorithm holds on day $t$)
+    \item Every day, given the imaged S\&P500 index values of the pas 16 trading days, the model will predict whether next day index at the opening should be higher or lower than present day index at the closing. Let $p_t = [1 - d_t;d_t]$ be the answer of the algorithm. $d_t$ is how much it thinks the index will increase, and $1-d_t$ is how much it thinks the index will decrease.
+    \item If $d_t > 0.6$ or $1 - d_t > 0.6$, the model is considered sure of itself enough: it tries and invest. Let $I_{0,t+1}$ be the index at next day opening, and $I_{1,t}$ the index at present day closing.
+    \item If $d_t > 0.6$ (the model predicts an increase of the index), the algorithm invests a part of its current money: $m_t * d_t$, buying a long action. Next day, it holds $m_{t+1} = m_t * (1-d_t) + m_t * d_t * \frac{I_{0,t+1}}{I_{1,t}}$.    
+    \item If $1 - d_t < 0.6$ (the model predicts a decrease of the index), the algorithm invests a part of its current money: $m_t * (1- d_t)$, buying a short action. Next day, it holds $m_{t+1} = m_t * d_t + m_t * (1 - d_t) * \frac{I_{1,t}}{I_{0,t+1}}$.
+    \item If $0.4 < d_t < 0.6$, the model is not considered sure enough, it does nothing: $m_t = m_{t+1}$ (that is an idle action).
+    \item Then, we train the algorithm with all S\&P500 company stock prices (so not just the index) of the past 16 days. 
+    \item We repeat from step 2. until December 31st 2019, and see how much money the algorithm has gained eventually.
+\end{enumerate}
+
+This is the first way to evaluate the models: each one individually. The second way will be to evaluate them altogether. The idea is exactly the same, the only difference lies in the definition of the "certainty" of the model. In case there is just one model, we consider the output of the algorithm ($p_t = [1 - d_t;d_t]$, with $d_t$ how much it thinks the index will increase). In case we have three models, we will consider the average certainty. For $p_{i,t}$ the prediction of model $i$ ($i \in [|1;6])$) at time $t$, we will consider $\sum\limits_{i=1}^{6} d_{i,t}$ instead of just $d_t$. Then, the exact same process as described above will be followed.
+
+It will then be time to compare the result of our investment:
+
+\begin{enumerate}
+    \item With the inflation. We obviously do not want to loose any money, not even inflation adjusted.
+    \item With the Buy\&Hold strategy: would using \$1,000 to buy a share of the index, then holding on to it give a better result?
+\end{enumerate}
+
+\pagebreak
+
+\section{Results}
+\label{results}
+
+\section{Discussion}
+\label{discuss}
+
+\section{Conclusion}
+\label{concl}
+
+\section{Bibliography}
+
+\begin{thebibliography}{9}
+    \bibitem{meteo}
+    Wikipedia. Timeline of Meteorology. Retrieved on 02/08/2020 from \url{https://en.wikipedia.org/wiki/Timeline_of_meteorology}
+
+    \bibitem{campanharo} 
+    Campanharo et al., 2011, \textit{Duality between Time Series and Networks}
+
+    \bibitem{arima}
+    Petrica, Stancu, Tindeche. 2016. \textit{Limitation of ARIMA models in financial and monetary economics}
+
+    \bibitem{conv_lstm}
+    Wan et al. 2019 \textit{Multivariate Temporal Convolutional Network: A Deep Neural Networks Approach for Multivariate Time Series Forecasting}
+
+    \bibitem{jastrzebska}
+    Agnieszka Jastrzebska. 2019. \textit{Time series classification through visual pattern recognition}
+
+    \bibitem{wang}
+    Wang et Oates. 2015. \textit{Imaging Time-Series to Improve Classification and Imputation}
+
+    \bibitem{barra}
+    Barra et al. 2020. \textit{Deep Learning and Time Series-to-Image Encoding for Financial Forecasting}
+
+    \bibitem{stationary}
+    Kwiatkowski et al. 1992. Testing the null hypothesis of stationarity against the alternative of a unit root: How sure are we that economic time series have a unit root? \textit{Journal of Econometrics}, 54(1-3), 159–178
+
+    \bibitem{thiel}
+    Thiel, Romano and Kurths. 2004. \textit{How much information is contained in a recurrence plot?}
+
+    \bibitem{senin}
+    Senin and Malinchik. 2013. \textit{SAX-VSM: Interpretable Time Series Classification Using SAX and VectorSpace Model}
+
+    \bibitem{silva}
+    Silva, Souza and Batista. 2013. \textit{ Time  Series  Classification  Using  Compression  Distance  of  RecurrencePlots}
+
+    \bibitem{souza}
+    Souza, Silva and Batista. 2014. \textit{Extracting Texture Features for Time Series Classification}
+
+    \bibitem{zheng}
+    Zheng et al. 2014. \textit{Time Series Classification Using Multi-Channels Deep Convolutional Neural Networks}
+
+    \bibitem{li}
+    Li, Kang and Li. 2020. \textit{Forecasting with time series imaging}
+
+    \bibitem{said}
+    Said and Erradi. 2019.\textit{Deep-Gap: A deep learning framework for forecasting crowdsourcing supply/demand  gap  based  on  imaging  time  series  and  residual  learning}
+
+    \bibitem{wang_encod}
+    Wang and Oates. 2015. \textit{Encoding Temporal Markov Dynamics in Graph for Visualizing and Mining Time Series}
+
+    \bibitem{le}
+    Le et al. 2010. \textit{Tiled convolutional neural networks}
+
+    \bibitem{ouannes}
+    Ouannès. Precision and Recall. Retrieved on 08/08/2020 from \url{https://pouannes.github.io/blog/precision-recall/}
+
+    \bibitem{berat}
+    Berat Sezer and Ozbayoglua. 2018. \textit{Algorithmic Financial Trading with Deep Convolutional Neural Networks:Time Series to Image Conversion Approach}
+
+    \bibitem{500names}
+    Wikipedia. List of S\&P500 companies. Retrieved on 09/08/2020 from \url{https://en.wikipedia.org/wiki/List_of_S%26P_500_companies}
+
+    \bibitem{fastai_head}
+    Fastai. Vision.learner. Retrieved on 02/08/2020 from \url{https://docs.fast.ai/vision.learner.html#create_head}
+
+    \bibitem{choi}
+    Choi, Ryu and Kim. 2018. \textit{Short-Term Load Forecasting based on
+    ResNet and LSTM}
+
+\end{thebibliography}
+
+\pagebreak
+
+\section{Appendix}
+
+\subsection{List of the S\&P500 companies}
+\label{505}
+
+model 1 : [284.0, 314.0, 307.0, 333.0, 1159.1797068017659]
+
+model 2 : [301.0, 310.0, 311.0, 316.0, 1257.9074506879347]
+
+model 3 : [261.0, 314.0, 307.0, 356.0, 1286.8407762120412]
+
+model 4 : [287.0, 321.0, 300.0, 330.0, 1240.028072178535]
+
+model 5 : [287.0, 339.0, 282.0, 330.0, 1193.8006199628269]
+
+model 6 : [292.0, 316.0, 305.0, 325.0, 1365.058971850805]
+
+
+\end{onehalfspace}
+
+\end{document}
+
+%To count words: go to perl command line (windows key), 
+%then "cd C:\Program Files\MiKTeX 2.9\scripts\texcount", 
+%then "texcount.pl C:\Mathilde\Classe\Kings\Dissertation\Report\MMerx_Dissertation.tex"
