@@ -8,6 +8,7 @@
 \usepackage{amsfonts}
 \usepackage{hyperref}
 \usepackage{graphicx}
+\usepackage{enumitem}
 \graphicspath{ {./Images/} }
 \usepackage{subcaption}
 \hypersetup{
@@ -303,38 +304,48 @@ This is the second imaging technique which will be discussed about.
 
 In 2011, Campanharo et al \cite{campanharo} wanted to encode time series into networks. To that extend, they needed a transition matrix: the Markov Transition Field (MTF). The general idea of the MTF is to answer the question: "If $x_i = x_j$ for some $i,j$, what is the chance that $x_{i+1} = x_{j+1}$?". 
 
-The mathematical definition of the MTF is the following one: let $n$ be the size of the MTF, and $p$ the number of samples from our time series we will be using ($x_t,...,x_{t+p-1}$). Then, we create the sequence $(q_i)$, where $(q_i)_{i \in [1;n-1]}$ are the $n-1$ $n$-quantiles, and $q_0 = \min\limits_j x_i$, $q_n = \max\limits_j x_i$. For each sample of our time series: $x_j / j \in [t;t+p-1]$, we assign the value $X_j = \max\limits_{i \in [|0;n|]} \{ i / q_i \leq x_j\}$. $X_j$ represents $x_j$ quantile bin. Eventually, the coefficients of the MTF will be: $M_{i,j} = \sum\limits_{k=1}^{n} P(X_k = j | X_{k-1} = i)$. In words, this is the conditional probability that when a sample is in the bin $i$, the next sample will be in the bin $j$. Hence we directly have $\sum\limits_{i=0}^{n-1} M_{i,j} = 1$. 
+The mathematical definition of the MTF is the following one: let $n$ be the size of the MTF, and $p$ the number of samples from our time series we will be using: ($x_t,...,x_{t+p-1}$). Then, we create the sequence $(q_i)$, where $(q_i)_{i \in [1;n-1]}$ are the $n-1$ $n$-quantiles, and $q_0 = \min\limits_j x_i$, $q_n = \max\limits_j x_i$. For each sample of our time series: $x_j / j \in [t;t+p-1]$, we assign the value $X_j = \max\limits_{i \in [|0;n|]} \{ i / q_i \leq x_j\}$. $X_j$ represents $x_j$ quantile bin. Eventually, the coefficients of the MTF will be: $M_{i,j} = \sum\limits_{k=1}^{n} P(X_k = j | X_{k-1} = i)$. In other words, this is the conditional probability that when a sample is in bin $i$, the next sample will be in bin $j$. Hence we directly have $\sum\limits_{i=0}^{n-1} M_{i,j} = 1$. 
 
 The MTF was only supposed to be a transition matrix (its name is telling in that regard), but it has been used on its own. Indeed, in 2015, Wang and Oates published a series of articles (among which \cite{wang} and \cite{wang_encod}) using MTF for time series classification. They explain this encoding technique helps representing the temporal evolution of the time series. Around the main diagonal of the MTF, we can see the small changes of the time series, whereas in the top-right and bottom-left corner we can see the massive changes. Hence, MTF representation helps highlight the volatility of the stock. 
 
-Said and Erradi \cite{said} then used this idea in 2019 to forecast a time series: the supply/demand gap in crowdsourcing. The use of MTF in their algorithm deep-gap gave them better results than with the LSTM architecture (RMSE of 11\% against 16\%), or even ARIMA (RMSE 11\% against 13\%).
+Said and Erradi \cite{said} then used this idea in 2019 to forecast a time series: the supply/demand gap in crowdsourcing. The use of MTF in their algorithm \emph{deep-gap} gave them better results than with the LSTM architecture (RMSE of 11\% against 16\%), or even ARIMA (RMSE of 11\% against 13\%).
 
-However, Campanharo et al. \cite{campanharo} advised using a lot of data samples compared to the matrix size (for instance $n = 20$ and $p = 320$), which isn't realistic: in our case, it would require over a yea of data to make a simple prediction! Hence, Wang and Oates \cite{wang_encod} suggested using MTF with \nameref{gaf}.
+The main downside of MTF is that it requires a large $p$ compared with $n$: Campanharo et al. \cite{campanharo} advised using a lot of data samples compared to the matrix size (for instance $n = 20$ and $p = 320$). For trading data, it means over a year of samples. So as to use relatively similar $n$ and $p$, Wang and Oates \cite{wang_encod} suggested using MTF with another imaging technique: \nameref{gaf}.
 
 \subsubsection{Gramian Angular Field}
 \label{gaf}
 
-In 2015, Wang and Oates (\cite{wang_encod} and \cite{wang}) created a new imaging technique: the Gramian Angular Field (GAF). Here is its definition: first, we need to rescale our time series ($x_t, ..., x_{t+n-1}$) from -1 to 1. Let $m_+ = \max\limits_{i \in [t; t+n-1]} x_t$, and $m_- = \min\limits_{i \in [t; t+n-1]} x_t$. We create the sequence $X_i = \frac{2 \times x_i - m_+ - m_-}{m_+ - m_-}$, and $X_i \in [-1;1], \forall i$. Then, we create the sequence $\phi_i = \arccos(X_i)$. Since $X_i \in [-1;1]$ this is possible, and $\phi_i \in [0;\pi], \forall i \in [t;t+n-1]$. Eventually, for $M$ the matrix of the GAF, $M_{i,j} = \cos(\phi_i + \phi_j)$.
+In 2015, Wang and Oates (\cite{wang_encod} and \cite{wang}) tried classifying time series using an uncommon imaging technique: the Gramian Angular Field (GAF). The idea is to use the Gramian matrix (an inner product matrix), which inner product is based on polar coordinates. Then, this matrix is translated into an image. 
+
+Here is the definition of the MTF: first, we need to rescale our time series ($x_t, ..., x_{t+n-1}$) from -1 to 1. Let $m_+ = \max\limits_{i \in [t; t+n-1]} x_t$, and $m_- = \min\limits_{i \in [t; t+n-1]} x_t$. We create the sequence $X_i = \frac{2 \times x_i - m_+ - m_-}{m_+ - m_-}$, and $X_i \in [-1;1], \forall i$. $(X_i)$ are a component of the polar coordinates. Since the other component is not relevant here, it will not be discusses further. $(X_i)$ is used to create the sequence $\phi_i = \arccos(X_i)$. Since $X_i \in [-1;1]$ this is possible, and $\phi_i \in [0;\pi], \forall i \in [t;t+n-1]$. Eventually, for $M$ the matrix of the GAF, $M_{i,j} = \cos(\phi_i + \phi_j)$.
 
 This representation has many advantages. First, it is bijective: the main diagonal is enough to find back the sequence $(X_i)$, and having only two values of the stock between $t$ and $t+n-1$ is enough to have all the values $x_t, ..., x_{t+n-1}$. Wang and Oates stress the importance of having "bijective" imaging techniques: algorithms have much better results than with images with which the time series can't be found back. Second, the GAF encodes some features of the time series: the correlation (in the coefficients $M_{i,j / |i-j| = k}$ we have the relative correlation by superposition of direction with respect to time interval $k$).
 
-On their own, training classification algorithms with GAF gave rather positive results, depending on the time series used. Trained on electrocardiogram data for instance, Wang and Oates \cite{wang_encod} obtained 11\% error rate, compared with 21\% for the MTF. However, what brought even better results, was using GAF and MTF together, as several color channels of the image. In that case, Wang and Oates \cite{wang} obtained a 9\% error rate, still on the electrocardiogram dataset.
+On their own, training classification algorithms with GAF gave rather positive results, depending on the time series used. Trained on electrocardiogram data for instance, Wang and Oates \cite{wang_encod} obtained 11\% error rate, compared with 21\% for the MTF. However, what brought even better results, was using GAF and MTF together, stacking them like several color channels of the image. In that case, Wang and Oates \cite{wang} obtained a 9\% error rate, still on the electrocardiogram dataset.
 
 This idea of different images superposed as channels of the image has been re-used several times: for instance, Said and Erradi tried in 2019 \cite{said} to superpose GAF and RP images.
 
 \subsection{Classification techniques}
 \label{sec:LR_classif}
 
-Barra et al. \cite{barra} wanted to forecast the S\&P500 index. Their purpose was to have an algorithm predicting whether the index would increase or decrease the next day. Since they didn't have a lot of data, they stated having one very deep network would be too prone to overfitting. Hence, they wanted having limited size models (for instance a simplified version of VGG-16, and not ResNet34). This architecture being chosen, they didn't want the results to depend on the initialization: they wanted to ensure a proper convergence of their algorithm. So as to address this problem, they decided training \emph{20} models, each of them having the same architecture but a different initialization. Then, if more than $n$\% of the models agree on "increase" or "decrease", it is the overall prediction. Else, the overall prediction is "unsure". $n$ is an hyperparameter, $50 \leq n \leq 70$. Berat Sezer and Ozbayoglua \cite{berat} tried using directly three classes ("increase", "decrease" and "stagnate"), but their algorithm tended to forecast stagnation too often (it had a recall of 55\% - see \ref{sec:LR_eval}). Barra et al. \cite{barra} had more promising results, which will be detailed in \ref{sec:LR_eval}.
+Once time series have been encoded into images, several researchers focused on the type of neural network best suited for classification.
 
-Their simplified version of VGG-16 Barra et al. used is constituted by 5 CNN layers, and a fully connected one. Indeed, CNN are a type of network commonly used for image classification. In 2010, Le et al. \cite{le} suggested an improvement of the CNN: the tiled CNN. In a CNN, the image is abstracted to a feature map in which all the weights are tied together. The idea of Tiled CNN is to only tie weights which are $k$ steps from each other ($k$ being an hyper parameter). When $k = 1$, it becomes a regular CNN. 
+Barra et al. \cite{barra} wanted to forecast the S\&P500 index. Their purpose was to have an algorithm predicting whether the index would increase or decrease the next day. Since they didn't have a lot of data, they stated having one very deep network would be too prone to overfitting. Hence, they wanted having limited size models (for instance a simplified version of VGG-16, and not ResNet34). 
 
-Tiled CNN let more the model learn by itself: instead of hard-coding the translational invariances, the network will find them out on its own. Wang and Oates \cite{wang} used Tiled CNN to obtain more successful classification algorithm. However the code they suggest today is that of a simplified ResNet, with regular CNN layers. They only use a dozen of CNN layers, with the same intention as Barra et al.'s: avoiding overfitting. 
+This architecture being chosen, they didn't want the results to depend on the initialization: they wanted to ensure a proper convergence of their algorithm. So as to address this problem, they decided training \emph{20 models}, each of them having the same architecture but a different initialization. Then, if more than $n$\% of the models agree on "increase" or "decrease", it was the overall prediction. Else, the overall prediction was "unsure" -- $n$ being an hyperparameter, $50 \leq n \leq 70$. 
+
+Berat Sezer and Ozbayoglua \cite{berat} tried using directly three classes ("increase", "decrease" and "stagnate"), but their algorithm tended to forecast stagnation too often (it had a recall of 55\% - see \ref{sec:LR_eval}). Barra et al. \cite{barra} had more promising results, which will be detailed in \ref{sec:LR_eval}.
+
+The simplified version of VGG-16 Barra et al. used is constituted by 5 CNN layers, and a fully connected one. Indeed, CNN are a type of network commonly used for image classification. In 2010, Le et al. \cite{le} suggested an improvement of the CNN: the tiled CNN. In a CNN, the image is abstracted to a feature map in which all the weights are tied together. The idea of Tiled CNN is to only tie weights which are $k$ steps from each other ($k$ being an hyper parameter). When $k = 1$, it becomes a regular CNN. Barra et al. used a regular CNN, whereas Wang and Oates \cite{wang} used a Tiled CNN.
+
+Tiled CNN let more the model learn by itself: instead of hard-coding the translational invariances, the network will find them out on its own. Even though Wang and Oates initially used Tiled CNN, the code they suggest today is that of a simplified ResNet, with regular CNN layers. They only use a dozen of CNN layers (hence ResNet12), with the same intention as Barra et al.'s: avoiding overfitting. 
 
 \subsection{Evaluating the model}
 \label{sec:LR_eval}
 
-In this article \cite{ouannes}, Ouannès explains the most basic evaluation for classification is the accuracy: $\frac{n_{well}}{n_{tot}}$, where $n_{well}$ is the number of prediction the algorithm got right, and $n_{tot}$ is the total number of prediction made by the algorithm. Unfortunately, this metric isn't always relevant: if one class is abundantly more represented than the other(s), the accuracy would be very high if the algorithm was to always predict this very class, which is not the outcome we want. Hence, we need new metrics: the precision $P$ and the recall $R$. For a binary classification (0 or 1), let:
+When training a model, and later evaluating it, a relevant metric must be chosen. 
+
+In this article \cite{ouannes}, Ouannès explains the most basic evaluation for classification is the accuracy: $\frac{n_{right}}{n_{tot}}$, where $n_{right}$ is the number of prediction the algorithm got right, and $n_{tot}$ is the total number of prediction made by the algorithm. Unfortunately, this metric isn't always relevant: if one class is abundantly more represented than the other(s), the accuracy would be very high if the algorithm were to always predict this very class, which is not desired. Hence, we need other metrics. For instance, the precision $P$ and the recall $R$. For a binary classification (0 or 1), let:
 
 \begin{itemize}
     \item $T_0$ be the number of 0 correctly predicted
@@ -343,16 +354,18 @@ In this article \cite{ouannes}, Ouannès explains the most basic evaluation for 
     \item $F_0$ be the number of 1 the algorithm mistakenly predicted as 0
 \end{itemize}
 
-Then, $R = \frac{T_0}{T_0 + F_1}$: that is the percentage of 0 that are rightly predicted by the algorithm (recall). $P = \frac{T_0}{T_0 + F_0}$: that is the percentage of times the algorithm is right when it predicts 0 (precision). This is a first way, numeric, to evaluate one algorithm.
+Then, $R = \frac{T_0}{T_0 + F_1}$: that is the percentage of 0 that are rightly predicted by the algorithm (recall). $P = \frac{T_0}{T_0 + F_0}$: that is the percentage of times the algorithm is right when it predicts 0 (precision). This is a first (numeric) way to evaluate one algorithm.
 
-Barra et al. \cite{barra} also suggested a more financial evaluation: comparing the predictions of their algorithm with the Buy\&Hold strategy. The idea is the following: many great investors (among which Warren Buffett) emphasize the best strategy when doing long term trading is to constitute a diversified portfolio, and then keep the values of this portfolio for as long as possible. For instance, despite the 2008 crisis and the coronavirus outbreak, the S\&P500 index has more than doubled between 2007 and today. Hence, for their testing data, Barra et al. compared these two strategies:
+Barra et al. \cite{barra} suggested a more financial evaluation: comparing the predictions of their algorithm with the Buy\&Hold strategy. The idea is the following: many great investors (among which Warren Buffett) emphasize the best strategy when doing long term trading is to constitute a diversified portfolio, and then keep the values of this portfolio for as long as possible. For instance, despite the 2008 crisis and the coronavirus outbreak, the S\&P500 index has more than doubled between 2007 and today. Hence, for their testing data, Barra et al. compared these two strategies:
 
 \begin{itemize}
     \item Buying a share of the S\&P500 at the beginning of the testing period, hold on to it, and see its value at the end of the period
     \item When the algorithm predicts "increase", buy a long action (buy a share of the index, then sell it before the market closes). When the algorithm predicts "decrease", buy a short action (sell a share of the index, then buy it before the market closes). If the algorithm predicts "unsure", do nothing. 
 \end{itemize}
 
-What they noticed is that their strategy (relying on their algorithm) was on average better than the Buy\&Hold strategy. Furthermore, when they were doing poorer than Buy\&Hold, it was only a little bit, whereas when they were doing better it was with a much bigger margin. 
+What they noticed is that their strategy (relying on their algorithm) was on average better than the Buy\&Hold strategy. Furthermore, when they were doing poorer than Buy\&Hold, it was only slightly, whereas when they were doing better it was with a much bigger margin. 
+
+In the \nameref{methodo} will be exposed how to use all the articles previously reviewed to make a new stock price forecasting algorithms, using 1) imaging time series techniques and 2) classification models.
 
 \pagebreak
 
@@ -372,13 +385,13 @@ In this dissertation, we aim at forecasting time series, using image classificat
 
 The purpose is to have a lot of data. Indeed, Machine Learning algorithms require massive amounts of data for the training. So as to constitute a large dataset, the S\&P500 is very interesting: one year of stock price history represents around 125,000 samples!
 
-The data used are 377 of the S\&P500 505\footnote{In the S\&P500, there are 500 companies, which issued a total of 505 common stocks.} common stock prices, from January 1st 2010 until December 31st 2015 for the training part, and from January 1st 2015 until December 31st 2019 for the testing part.
+The data used are 200 of the S\&P500 505\footnote{In the S\&P500, there are 500 companies, which issued a total of 505 common stocks.} common stock prices, from January 1st 2010 until December 31st 2015 for the training part, and from January 1st 2015 until December 31st 2018 for the testing part.
 
 \subsubsection{Company names}
 
-So as to obtain the name of the 505 common stocks from the S\&P500, one can use the list from Wikipedia \cite{500names}. It'll be necessary to do some web scraping (using python library \code{BeautifulSoup}) to obtain the common stock symbols\footnote{The CSS class we are interested in is "\textit{external text}".}. 
+So as to obtain the names of the 505 common stocks from the S\&P500, one can use the list from Wikipedia \cite{500names}. It is necessary to do some web scraping (using python library \code{BeautifulSoup}) to obtain the common stock symbols\footnote{The CSS class we are interested in is "\textit{external text}".}. 
 
-The 505 symbols can be found in the Appendix \ref{505}, as well as the 373 common stocks used in this dissertation. 
+The 505 symbols can be found in the Appendix \ref{505}, as well as the 200 common stocks used in this dissertation. 
 
 \subsubsection{Downloading the stock prices}
 
@@ -393,14 +406,34 @@ We have now obtained four different time series per common stock:
     \item The price at the closing of the trading day
 \end{itemize}
 
-These time series begin on January 1st, 2010 and end on December 31st 2019.
+These time series begin on January 1st, 2010 and end on December 31st 2018.
 
-We want to obtain stationary data\cite{stationary}, which those time series are not. Furthermore, we're interested in the evolution of the stock price, and not just in its value: an increase by 10\% is meaningful whatever the price, whereas a stock gaining 10\$ does not mean the same whether the stock costs 10\$ or 300\$. Hence, the following transformation is made: for each time series $(x_t)$, we will use the first difference of the logarithm: $\left(\log\left(\frac{x_t}{x_{t+1}}\right)\right)$. Hence, when we will talk about a time series, it will be meant the first differentiate of the logarithm.
+We want to obtain stationary data\cite{stationary}, which those time series are not. Furthermore, we're interested in the evolution of the stock price, and not just in its value: an increase by 10\% is meaningful whatever the price, whereas a stock gaining 10\$ does not mean the same whether the stock costs 10\$ or 300\$. Hence, the following transformation is made: for each time series $(x_t)$, we will use the first difference of the logarithm: $X_t = \left(\log\left(\frac{x_t}{x_{t+1}}\right)\right)$. Hence, when we will talk about a time series, it will be meant the first differentiate of the logarithm of the said time series.
+
+\subsubsection{Data description}
+Here are some statistics on the data used:
+
+\begin{itemize}
+    \item From 2010 until 2014 I have gathered data on 200 companies, for about 1,250 trading days, with 4 data points per day (opening, closing, minimum and maximum prices). It represents a total of roughly 1,000,000 samples.
+    
+    \item From 2015 until 2018, I have gathered data on 75 companies (plus the S\&P500 index itself), for about 1,000 trading days, with 4 data points per day. It represents a total of roughly 300,000 samples.
+    
+    \item On average, from one day to the next between 2010 and 2014, a stock price will increase by 0.64\%.
+    \begin{itemize}
+        \item We can notice this average is \emph{not} what happens every day. If that was the case, and someone were to invest on day 0, then on trading day 1250 (which represents about 5 years) they would have gained almost 2,000 times their investment! Hence, this proves that S\&P500 increase is not linear, and if a powerful trading strategy were found, the index could be beaten.
+    \end{itemize}
+
+    \item The standard deviation from one day to the next between 2010 and 2014 is 0.018. If the data were assumed to follow a Gaussian low, it would mean 68\% of the time, the daily evolution of the stock price is comprised between +2.4\% and -1.1\% (the 95\% interval is [-2.8\%; +4.2\%]).
+    \begin{itemize}
+        \item Those intervals are quite wide -- especially when compared with the mean. It means stock prices can be rather volatile, which is precisely what was noticed when finding the average increase by 0.06\% of the stocks.
+    \end{itemize}
+\end{itemize}
+
 
 
 \subsection{Imaging the time series}
 
-In this subsection, we will detail the imaging techniques. There are three of them, and the three (grayscale) images obtained will be used as the three channels of the final image. 16 trading days data will be used to constitute one image.
+In this subsection, we will detail the imaging techniques. There are three of them, and the three (greyscale) images obtained will be used as the three channels of the final image. 16 trading days data will be used to constitute one image.
 
 For each technique, we will make four small images (16x16 pixels): one for the time series of the maxima, one for the time series of the minima, one for the time series of the opening prices, and one for the time series of the losing prices. Then, we will concatenate these four images into a big one (32x32 pixels). This image will be one (out of three) channels of the final image. Here are the next steps:
 
@@ -451,7 +484,7 @@ In our case, for each $t \in [0; T-15]$, we have four recurrence plots (one for 
         \includegraphics[width=0.95\linewidth]{rp_min.PNG}
         \caption{Minimum prices}
     \end{subfigure}
-    \caption{Recurrence plots of four time series representing the company Snap-on between January, 4th and 27th, 2010}
+    \caption{Recurrence plots of four time series representing the S\&P500 index between December, 11th and 31st, 2015}
     \label{fig:rec_plot}
 \end{figure}
 
@@ -478,7 +511,7 @@ Now we need to compute the wavelet transform of these recurrence plots. It will 
         \includegraphics[width=0.95\linewidth]{wt_HH.PNG}
         \caption{Second diagonal texture}
     \end{subfigure}
-    \caption{Four different textures given by the wavelet transform on the recurrence plot of the opening rice of Snap-on between January, 4th and 27th, 2010}
+    \caption{Four different textures given by the wavelet transform on the recurrence plot of the opening value of S\&P500 index between December, 11th and 31st, 2015}
     \label{fig:wave_transf}
 \end{figure}
 
@@ -526,7 +559,7 @@ We have now obtained four 16x16 pixel images: one for each time series (opening,
      \centering
      \captionsetup{justification=centering}
      \includegraphics[width=7cm]{wt_CONCAT.PNG}
-     \caption{Wavelet transform of the recurrence plot of Snap-on, between January 4th and 27th, 2010}
+     \caption{Wavelet transform of the recurrence plots of the S\&P500 index between December, 11th and 31st, 2015}
 \label{fig:wt}
 \end{figure}
 
@@ -535,23 +568,29 @@ This image is the first channel of the final picture. In \nameref{sec:mtf}, we w
 \subsubsection{Markov Transition Field}
 \label{sec:mtf}
 
-\textit{\textbf{Reminder}: $X_k, k \in [t, t+15]$ are the values of our time series -- either the opening, closing, maximum or minimum price of the trading day.}
+\textit{\textbf{Reminder}: $X_k, k \in [t - 240, t+15]$ are the values of our time series -- either the opening, closing, maximum or minimum price of the trading day.}
 
 This section details how to obtain the second channel image: using the Markov Transition Field (MTF). This section contains parts:
 
 \begin{enumerate}
     \item How to make the MTF
     \item The meaning of each coefficient
+    \begin{itemize}
+        \item Why using 240?
+    \end{itemize}
     \item The concatenation of four MTF
 \end{enumerate}
 
 \noindent \textbf{First, let's detail how to make a MTF.}
 
-For each value $X_k, k \in [t, t+15]$ we will associate its rank $r_k$. $r_k = 16$ means $X_k$ is the smallest of the $X_k, k \in [t, t+15]$, and $r_k = 1$ means $X_k$ is the biggest. Then, for $\#A$ the cardinal of an ensemble $A$, we compute the matrix $M_{i,j} = \# \{r_{k+1} = j \cap r_k = i \}$.Eventually, in the matrix, we divide each column by the sum of its elements.
+The idea is to assign each $X_k$ to a subset of the time series, each subset containing an equal number of samples. There will be a total of 16 subset: they are the 16-quantile bins. The 1/16th smallest $X_k$ will be assigned to bin 1, the next 1/16th smallest $X_k$ will be assigned to bin 2, etc. until the 1/16th biggest $X_k$ will be assigned to bin 16. 
+
+Hence, for each sample $X_k, k \in [t - 240, t+15]$ is assigned its 16-quantile bin $b_k \in [|1;16|]$. Then, for $\#A$ the cardinal of an ensemble $A$, we compute the matrix $M_{i,j} = \# \{b_{k+1} = j \cap b_k = i \}$.Eventually, in the matrix, we divide each column by the sum of its elements.
 
 \noindent \textbf{Second, let's explain the meaning of the MTF coefficients.}
 
-One coefficient $M_{i,j}$ represents the probability that an element would be the $j$-th bigger of the time series knowing that the element the day before was the $i$-th bigger of the time series. Figure \ref{fig:mtf4} represents the MTF of the opening, closing, maximum and minimum stock price of Snap-on, for every trading day between January 4th and 27th, 2010.
+One coefficient $M_{i,j}$ represents the probability that an element belongs to the $j/16$-th biggest of the time series knowing that the element the day before belonged to the $i/16$-th biggest of the time series. Figure \ref{fig:mtf4} represents the MTF of the opening, closing, maximum and minimum stock price of Snap-on, for every trading day between January 4th and 27th, 2010.
+
 
 \begin{figure}[h!]
     \centering
@@ -573,9 +612,17 @@ One coefficient $M_{i,j}$ represents the probability that an element would be th
         \includegraphics[width=0.95\linewidth]{mtf_low.PNG}
         \caption{Minimum prices}
     \end{subfigure}
-    \caption{MTF of four different time series: the stock price of Snap-on between January 4th and January 27th 2010}
+    \caption{MTF of four different time series: the values of S\&P500 index between January, 12th and December 31st, 20150}
     \label{fig:mtf4}
 \end{figure}
+
+\noindent \textit{Why using 240?}
+
+As said earlier, the desired size of the images is 16x16 pixels (which will then be concatenated into 32x32 pixels images). Hence, the bins used will be 16-quantile bins (so as to have 16 bins, each column of the image representing one bin). If (similarly as for the other imaging techniques) only $X_k,..., X_{k+15}$ samples were used, then each bin would only contain one sample. Which means only one pixel per column would be used -- the others being blanks pixels. And this is the precise reason why regular plots have not been used! The purpose of this Dissertation is to have images containing as much information as possible. 
+
+Using 256 samples per image enables to have 16 samples per bin, hence each pixel can take 16 different values. Of course, one MTF image requires much more days of trading than the RP ones for instance. Yet, since those data are not difficult to find, and since the computational running time is barely increased, the choice of using 256 samples per image seems the best alternative. This is the reason why the samples used for one image run between $X_{k-240},... ,X_{k+15}$, and not just between $X_k,...,X_{k+15}$ as for the other imaging techniques.
+
+
 
 \noindent \textbf{Third, let's concatenate the four MTF.}
 
@@ -585,7 +632,7 @@ Like before, we have four different images representing one company stock prices
     \centering
     \captionsetup{justification=centering}
     \includegraphics[width=7cm]{mtf_concat.PNG}
-    \caption{MTF of Snap-on, between January 4th and 27th, 2010}
+    \caption{MTF of S\&P500 index between January 12th, and December 31st, 2015}
 \label{fig:mtf_concat}
 \end{figure}
 
@@ -630,7 +677,7 @@ Then, we compute the arccosines of each value: $\phi_k = \arccos(f_t(X_k))$. Now
         \includegraphics[width=0.95\linewidth]{gaf_low.PNG}
         \caption{Minimum prices}
     \end{subfigure}
-    \caption{GAF of four different time series: the stock price of Snap-on between January 4th and January 27th 2010}
+    \caption{GAF of four different time series: the values of S\&P500 index between December, 11th and 31st, 2015}
     \label{fig:gaf4}
 \end{figure}
 
@@ -642,7 +689,7 @@ Like before, we have four images representing one company stock prices during 16
     \centering
     \captionsetup{justification=centering}
     \includegraphics[width=7cm]{gaf_concat.PNG}
-    \caption{GAF of Snap-on, between January 4th and 27th, 2010}
+    \caption{GAF of S\&P500 index between December, 11th and 31st, 2015}
 \label{fig:gaf_concat}
 \end{figure}
 
@@ -666,7 +713,7 @@ We now have three images: the wavelet transform of the recurrence plots, the Mar
         \includegraphics[width=1\linewidth]{gaf_concat.PNG}
         \caption{Gramian Angular Field}
     \end{subfigure}    
-    \caption{GAF of four different time series: the stock price of Snap-on between January 4th and January 27th 2010}
+    \caption{GAF of four different time series: the value of S\&P500 index between December, 11th and 31st, 2015}
     \label{fig:3channels}
 \end{figure}
 
@@ -674,21 +721,18 @@ We now have three images: the wavelet transform of the recurrence plots, the Mar
     \centering
     \captionsetup{justification=centering}
     \includegraphics[width=7cm]{total_image.PNG}
-    \caption{RP, MTF and GAF as the three channels using the stock price of Snap-on, between January 4th and 27th, 2010}
+    \caption{RP, MTF and GAF as the three channels using the value of S\&P500 index between December, 11th and 31st, 2015}
 \label{fig:final_image}
 \end{figure}
 
-We have now built \textit{one} image: that of the company Snap-on between January 4th and 27th, 2010. The same must be done with all the companies on which data has been gathered, between January 1st 2010 and December 31st 2019.
+We have now built \textit{one} image: that of the company Snap-on between January 4th and 27th, 2010. The same must be done with all the companies on which data has been gathered, between January 1st 2010 and December 31st 2018.
 
-\subsubsection{Statistics}
-
-We now have our image dataset finished. We have 457,528 days of stock prices between January 1st, 2010 and December 31st, 2014 for 377 companies. We have 554,556 days of stock prices between January 1st, 2015 and December 31st, 2019 for 447 companies. It means we have a little more testing data than training data. In \nameref{sec:meth_eval}, it will be explained how to deal with this issue. 
 
 \subsection{Classification algorithm}
 
 \subsubsection{Labels}
 
-The dataset being done, we need to attribute labels to our images. We want to know if on next day at the opening of the trading day, the stock price will be higher or lower than on current day at the closing of the trading day. Hence, this is a classification problem. To each image, we assign the label 1 (if an increase will arrive next day) or 0 (else).
+The dataset being done, we need to attribute labels to our images. The data used are the 16 (or 256 for the MTF) closing, maximum and minimum prices until the day before, and the 16 (or 256) opening prices until the present day. We want to know if today at the closing of the trading day, the stock price will be higher or lower than at the opening of the trading day. Hence, this is a classification problem. To each image, we assign the label 1 (if the stock price is to increase) or 0 (else).
 
 \subsubsection{Architecture}
 
@@ -704,13 +748,13 @@ Hence,the architecture used is a ResNet with 12 CNN (we don't want a too big net
 \label{fig:resnet12}
 \end{figure}
 
-Eventually, we have to train our model. To that extend, we'll split the dataset into 3 groups: the training, the validation and the testing sets. The training and validation datasets are the stock prices from January 1st, 2010 until December 31st, 2014 (with the training data being 70\% of these data). The testing dataset is the stock prices from January 1st 2015, until December 31st, 2019. The evaluation will be explained in next section.
+Eventually, we have to train our model. To that extend, we'll split the dataset into 3 groups: the training, the validation and the testing sets. The training and validation datasets are the stock prices from January 1st, 2010 until December 31st, 2014 (with the training data being 70\% of these data). The testing dataset is the stock prices from January 1st 2015, until December 31st, 2018. The evaluation will be explained in next section.
 
 
 \subsubsection{Evaluation}
 \label{sec:meth_eval}
 
-6 models with the architecture described above are created. Their difference will be the initialization of their CNN layers: see Table \ref{table:initialization}. The initialization of a layer is the distribution law used to set the initial value of each weight (before the fitting). The initialization can change a lot the final outcome of the algorithm, that is why it is important to try different initializations.
+5 models with the architecture described above are created. Their difference will be the initialization of their CNN layers: see Table \ref{table:initialization}. The initialization of a layer is the distribution law used to set the initial value of each weight (before the fitting). The initialization can change a lot the final outcome of the algorithm, that is why it is important to try different initializations.
 
 \begin{table}[h!]
     \begin{center}
@@ -719,11 +763,10 @@ Eventually, we have to train our model. To that extend, we'll split the dataset 
             \textbf{Name} & \textbf{Initialization} \\ 
             \hline \hline
             Model 1 & Random normal \\  \hline
-            Model 2 & Glorot normal \\  \hline
-            Model 3 & Uniform \\  \hline
-            Model 4 & He normal \\  \hline
-            Model 5 & LeCun Uniform \\  \hline
-            Model 6 & Orthogonal \\  
+            Model 2 & Uniform \\  \hline
+            Model 3 & Glorot normal \\  \hline
+            Model 4 & Orthogonal \\  \hline
+            Model 5 & LeCun Uniform \\  
             \hline
         \end{tabular}
     \end{center}
@@ -731,20 +774,18 @@ Eventually, we have to train our model. To that extend, we'll split the dataset 
     \label{table:initialization}
 \end{table}
 
-First, each of these six models will be evaluated individually. The idea is the following: on January 1st 2015, the algorithm is given \$1,000. Then every day it predicts whether the S\&P500 index should increase of decrease the next day. If it is sure enough, it invests a part of its money on the index (either with a long or short action). Else, it does nothing (that is an idle action). On December 31st, 2019, we see how much money it has left. Here are the mathematical details: 
+First, each of these six models will be evaluated individually. The idea is the following: on January 1st 2016\footnote{Since the MTF image needs about a year of data, and strictly no overlapping of the samples was desired to avoid overfitting, the testing effectively begins on January 1st, 2016, even though the data used cover all year 2015.}, the algorithm is given \$1,000. Then every day it predicts whether the S\&P500 index should increase of decrease the next day. If it is sure enough, it invests a part of its money on the index (either with a long or short action). Else, it does nothing (that is an idle action). On December 31st, 2018, we see how much money it has left. Here are the mathematical details: 
 
 \begin{enumerate}
-    \item Initially, the algorithm is given: $m_0 = \$1,000$ (and $m_t$ is the money the algorithm holds on day $t$)
-    \item Every day, given the imaged S\&P500 index values of the pas 16 trading days, the model will predict whether next day index at the opening should be higher or lower than present day index at the closing. Let $p_t = [1 - d_t;d_t]$ be the answer of the algorithm. $d_t$ is how much it thinks the index will increase, and $1-d_t$ is how much it thinks the index will decrease.
+    \item Initially, the algorithm is given: $m_0 = \$1,000$ (with $m_t$ the money the algorithm holds on day $t$)
+    \item Every day, the algorithm is given the imaged S\&P500 index values it will use to make the prediction. Let $p_t = [1 - d_t;d_t]$ be the answer of the algorithm. $d_t$ is the inferred probability of an increase, and $1-d_t$ is the inferred probability of a decrease.
     \item If $d_t > 0.6$ or $1 - d_t > 0.6$, the model is considered sure of itself enough: it tries and invest. Let $I_{0,t+1}$ be the index at next day opening, and $I_{1,t}$ the index at present day closing.
     \item If $d_t > 0.6$ (the model predicts an increase of the index), the algorithm invests a part of its current money: $m_t * d_t$, buying a long action. Next day, it holds $m_{t+1} = m_t * (1-d_t) + m_t * d_t * \frac{I_{0,t+1}}{I_{1,t}}$.    
     \item If $1 - d_t < 0.6$ (the model predicts a decrease of the index), the algorithm invests a part of its current money: $m_t * (1- d_t)$, buying a short action. Next day, it holds $m_{t+1} = m_t * d_t + m_t * (1 - d_t) * \frac{I_{1,t}}{I_{0,t+1}}$.
     \item If $0.4 < d_t < 0.6$, the model is not considered sure enough, it does nothing: $m_t = m_{t+1}$ (that is an idle action).
     \item Then, we train the algorithm with all S\&P500 company stock prices (so not just the index) of the past 16 days. 
-    \item We repeat from step 2. until December 31st 2019, and see how much money the algorithm has gained eventually.
+    \item We repeat from step 2. until December 31st 2018, and see how much money the algorithm has gained eventually.
 \end{enumerate}
-
-This is the first way to evaluate the models: each one individually. The second way will be to evaluate them altogether. The idea is exactly the same, the only difference lies in the definition of the "certainty" of the model. In case there is just one model, we consider the output of the algorithm ($p_t = [1 - d_t;d_t]$, with $d_t$ how much it thinks the index will increase). In case we have three models, we will consider the average certainty. For $p_{i,t}$ the prediction of model $i$ ($i \in [|1;6])$) at time $t$, we will consider $\sum\limits_{i=1}^{6} d_{i,t}$ instead of just $d_t$. Then, the exact same process as described above will be followed.
 
 It will then be time to compare the result of our investment:
 
@@ -758,12 +799,138 @@ It will then be time to compare the result of our investment:
 \section{Results}
 \label{results}
 
+The main idea of this dissertation was trying and forecasting the future (S\&P500) stock price only based on their previous values. If I were to be successful, it would be a rejection of the efficient market hypothesis, even in its weak form. 
+
+Instead of using the raw time series data, harnessing the strengths of computer vision algorithms via imaging the time series was at stake. 5 different Machine Learning algorithms have been trained, all having the same architecture (ResNet12) but different initializations. These algorithms have been trained using S\&P500 companies stock prices from 2010 until 2014. They have then been tested on the S\&P500 index with data between 2015 and 2018.
+
+On January 1st, 2016, \$1,000 have been given to the algorithms to trade with. On December 31st, 2018 the money they had gained was compared:
+
+\begin{itemize}
+    \item With the money they had at the beginning, inflation adjusted
+    \begin{itemize}
+        \item The inflation between 2016 and 2018 was 6.2\%. Hence, when beginning with \$1,000 on January 1st, 2016, we hope ending up with over \$1,062 on December 31st, 2018.
+    \end{itemize}
+    \item With the money they would have had had they just invested the \$1,000 on the index, and then not touched it for 3 years
+    \begin{itemize}
+        \item The S\&P500 index was at 2,012.66 at the beginning of the period, and reached 2,506.85 at the end of it. It represents an increase of 24.6\%. For a \$1,000 investment at the beginning of 2016, it would represent \$1,246 at the end of 2018.
+    \end{itemize}
+\end{itemize}
+
+For each initialization method of the algorithms, it will be detailed the results obtained. They will be compared with the inflation and the Buy\&Hold strategy.
+
+Furthermore, it can be interesting to know on a day-to-day basis which investment is more profitable: Buy\&Hold, or those made by the 6 models. To evaluate that, I will use the Mean Percentage Error (MPE). It represents the average percentage of difference between the prediction and the real value. The MPE is defined as follows: let $p_0,...,p_T$ be the predicted values, and $t_0,...,t_T$ the target values. Then $MPE = \frac{1}{n} \sum\limits_{i=0}^{T} \frac{p_T - t_T}{t_T}$. In our case, $(p_i)$ represents the investment made by the algorithm at time $i$, and $(t_i)$ represents the value of the index at the same moment. The higher the MPE, the more the investment algorithm beats (on average) the Buy\&Hold strategy.
+
+In the following subsections will be reviewed the different models.
+
+\subsection{Model 1: Random normal initialization}
+
+On January 1st, 2016 the S\&P500 index was valued at 2,012.66. So as to compare my results with the index more easily, I have divided the index value by 2.01266. This way, the initial value of the index (1,000) is equal to the money initially invested (\$1,000), which makes understanding and interpreting the results easier. In Figure \ref{fig:plot_model1} one can compare the evolution of the index with the investment made by Model 1 (with a random normal initialization).
+
+\begin{figure}[h!]
+     \centering
+     \includegraphics[width=10cm]{model1_sp.PNG}
+     \caption{Comparison between the investment made by Model 1 and a Buy\&Hold strategy from 2016 until 2018 - each grey dotted line corresponds to the beginning of a year}
+\label{fig:plot_model1}
+\end{figure}
+
+On 31st December 2018, the algorithm has managed to obtain \$1,125.38 out of its initial investment, which represents a 12.5\% increase. It is twice better than the inflation (+6.2\%), but twice worse than the index increase (+24.6\%). It means no money has been lost, not even inflation adjusted. However, the Buy\&Hold strategy would be more profitable. 
+
+For Model 1, $MPE_1 = -10\%$: it means on average, the investment realized by Model 1 is 10\% lower than the Buy\&Hold strategy at the same moment. We want the MPE to be as high as possible.
+
+This first result is not very conclusive: the money obtained eventually is greatly lower than with the Buy\&Hold strategy, not only at the end of the investment period, but also every day on average. Fortunately, it has gained money (even when taking into account the inflation). 
+
+\subsection{Model 2: Uniform initialization}
+
+In Figure \ref{fig:plot_model2}, one can compare the evolution of the index with the investment made by Model 2 (with a uniform initialization).
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=10cm]{model2_sp.PNG}
+    \caption{Comparison between the investment made by Model 2 and a Buy\&Hold strategy from 2016 until 2018 - each grey dotted line corresponds to the beginning of a year}
+\label{fig:plot_model2}
+\end{figure}
+
+On December 31st, 2018, the algorithm has managed to obtain \$1,194.89. It means it has obtained a 19.4\% return with its investment strategy. This is getting closer to the Buy\&Hold (24.6\% return) strategy than Model 1 (12.5\% return). 
+
+However, one can notice than from year 1 (the second dotted line in Figure \ref{fig:plot_model2}), there is very often a great gap between the algorithm investment and the index. That is underlined by the MAP of Model 2: $MPE_2 = -8.86\%$. This large figure highlights the great gap of the two final years. 
+
+This second result is reassuring: the algorithm is much closer to the Buy\&Hold strategy at the end of the investing period. However, the large MPE shows the success of the algorithm depends on the investment beginning and ending dates. We need models having more certain results.
+
+\subsection{Model 3: He normal initialization}
+
+In Figure \ref{fig:plot_model3}, one can compare the evolution of the index with the investment made by Model 3 (with He normal initialization).
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=10cm]{model3_sp.PNG}
+    \caption{Comparison between the investment made by Model 3 and a Buy\&Hold strategy from 2016 until 2018 - each grey dotted line corresponds to the beginning of a year}
+\label{fig:plot_model3}
+\end{figure}
+
+On December 31st, 2018, the algorithm has managed to obtain \$1,169.94, which represents a 16.9\% return on investment. Even though this figure indicated a slightly less effective algorithm then Model 2 (19.4\%), when watching Figure \ref{fig:plot_model3} one can notice the black and grey curves seem closer than for Figure \ref{fig:plot_model2}.
+
+This is highlighted by the MPE of Model 3. $MPE_3 = -5.3\%$, which means on average Model 3 is only around 5\% less effective than the Buy\&Hold strategy. A pattern seems to emerge from this plot: when the S\&P500 index decreases strongly, this model seems to manage flattening the curve -- and even make a small profit sometimes! The Buy\&Hold strategy seems to beat the model during long periods of increase: there, the model does not take advantage enough of the situation. This will be addressed in the \nameref{discuss}.
+
+\subsection{Model 4: Orthogonal initialization}
+
+In Figure \ref{fig:plot_model4}, one can compare the evolution of the index with the investment made by Model 4 (with an orthogonal initialization).
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=10cm]{model4_sp.PNG}
+    \caption{Comparison between the investment made by Model 4 and a Buy\&Hold strategy from 2016 until 2018 - each grey dotted line corresponds to the beginning of a year}
+\label{fig:plot_model4}
+\end{figure}
+
+On December 31st, 2018, the algorithm has managed to obtain \$1,263.174, which represents a 23.3\% return on investment. For the first time, one of the models obtains a very similar result as the Buy\&Hold strategy (24.6\%). It can be interesting to note that the trading day before December 31st, 2018, the Buy\&Hold strategy represented a 18.3\% return, whereas Model 4 enabled a 25.6\% return. Hence, when considering the end of this investment period, both strategies can be considered pretty equivalent.
+
+When looking at Figure \ref{fig:plot_model4}, the black line seems even closer to the grey line as before. This is confirmed by the MPE: $MPE_4 = -4.2\%$. Once again, the pattern described in the previous subsection can be noticed: for instance in 2017 (between both middle dotted grey lines), the S\&P500 index regularly increases whereas Model 4 investment stagnates. The same effect can be seen between trading day 600 and 700. However, between trading day 500 and 600, the index decreases a lot whereas Model 4 investment increases strongly. This happened again between trading day 730 and 780. 
+
+\subsection{Model 5: LeCun uniform initialization}
+
+In Figure \ref{fig:plot_model5}, one can compare the evolution of the index with the investment made by Model 5 (with LeCun uniform initialization).
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=10cm]{model5_sp.PNG}
+    \caption{Comparison between the investment made by Model 5 and a Buy\&Hold strategy from 2016 until 2018 - each grey dotted line corresponds to the beginning of a year}
+\label{fig:plot_model5}
+\end{figure}
+
+On December 31st, 2018, the algorithm has managed to obtain \$1,158.08, which represents a 15.8\% return on investment. This may seem bad compared with the Buy\&Hold strategy (24.5\%), however the trading day before December 31st, 2018, the Buy\&Hold strategy represented a 18.3\% return, whereas Model 4 enabled a 17.6\% return. Hence, this last model is not so far away behind the Buy\&Hold strategy. 
+
+Furthermore, this model reaches the best MPE among all others: $MPE_5 = 0.2\%$. It means on average, this model gives (very slightly I must admit) better results than the Buy\&Hold strategy. Indeed, during the first year and half of investment, Model 5 investment remains continuously above the Buy\&Hold investment, until it became outstripped. 
+
+\subsection{Overview of the different results}
+
+No model has lost any money, not even inflation adjusted. The worst model had a return of 12.5\%, which is still twice as much as the inflation between 2016 and 2018. The best model reached a return (23.6\%) almost as high as the Buy\&Hold strategy would have (24.5\%).
+
+However, it has been noticed that the comparison with the Buy\&Hold model depends a lot on the final day chosen. Hence, another metric has been introduced: the MPE. Once again, the worst model was worse than the Buy\&Hold strategy (-10\% on average). However, the best model was very similar to the Buy\&Hold strategy, and even very slightly better (+0.2\% on average)!
+
+In the \nameref{discuss}, these results will be dissected, as well as compared with the research papers detailed in the \nameref{sect_littrev}.
+
+\pagebreak
+
 \section{Discussion}
 \label{discuss}
+
+\subsection{Achievements}
+Beating the Buy\&Hold strategy often is a researcher goal to prove their forecasting method is efficient. In this dissertation, 5 different models have been trained to forecast whether the S\&P500 index would increase or decrease the next training day. 
+
+
+\pagebreak
 
 \section{Conclusion}
 \label{concl}
 
+Time series forecasting had been a matter of interest for millenniums, in many different fields. Trading is one of those fields. Many forecasting techniques have been developed, and for the past decades computers have been one of the -- if not the only -- common denominator of these techniques. 
+
+Since computer vision has become increasingly powerful nowadays, some researchers have been trying to translate time series into images, and then make inferences on them instead of on the raw figures. The idea is to try and harness the effectiveness of classification computer vision algorithms. 
+
+The purpose was to find a relevant imaging technique and an adequate classification algorithm so as to forecast whether the price of the studied stock would increase or decrease. 
+
+
+\pagebreak
 \section{Bibliography}
 
 \begin{thebibliography}{9}
@@ -840,8 +1007,476 @@ It will then be time to compare the result of our investment:
 
 \section{Appendix}
 
-\subsection{List of the S\&P500 companies}
+\subsection{List of the S\&P500 companies used in this dissertation}
 \label{505}
+
+\subsubsection{For the training}
+
+\begin{array}{ | l | l | l | }
+    \hline
+        Symbol & Security & Date first added \\ \hline
+        A & Agilent Technologies Inc &  \\ \hline
+        ABC & AmerisourceBergen Corp &  \\ \hline
+        ADI & Analog Devices, Inc. &  \\ \hline
+        AEP & American Electric Power &  \\ \hline
+        AIZ & Assurant &  \\ \hline
+        ALK & Alaska Air Group Inc & 42503 \\ \hline
+        AMD & Advanced Micro Devices Inc & 42814 \\ \hline
+        AMZN & Amazon.com Inc. &  \\ \hline
+        AOS & A.O. Smith Corp & 42942 \\ \hline
+        ARE & Alexandria Real Estate Equities & 42814 \\ \hline
+        AVY & Avery Dennison Corp &  \\ \hline
+        BAC & Bank of America Corp &  \\ \hline
+         &  &  \\ \hline
+         &  &  \\ \hline
+         &  &  \\ \hline
+         &  &  \\ \hline
+         &  &  \\ \hline
+        BIIB & Biogen Inc. &  \\ \hline
+         &  &  \\ \hline
+         &  &  \\ \hline
+         &  &  \\ \hline
+         &  &  \\ \hline
+         &  &  \\ \hline
+         &  &  \\ \hline
+        BMY & Bristol-Myers Squibb &  \\ \hline
+         &  &  \\ \hline
+         &  &  \\ \hline
+         &  &  \\ \hline
+         &  &  \\ \hline
+         &  &  \\ \hline
+         &  &  \\ \hline
+        CAG & Conagra Brands &  \\ \hline
+         &  &  \\ \hline
+         &  &  \\ \hline
+         &  &  \\ \hline
+         &  &  \\ \hline
+         &  &  \\ \hline
+         &  &  \\ \hline
+         &  &  \\ \hline
+        CCL & Carnival Corp. &  \\ \hline
+         &  &  \\ \hline
+         &  &  \\ \hline
+         &  &  \\ \hline
+         &  &  \\ \hline
+         &  &  \\ \hline
+        CFG & Citizens Financial Group & 42398 \\ \hline
+        CHD & Church \& Dwight & 42367 \\ \hline
+        CHRW & C. H. Robinson Worldwide & 39143 \\ \hline
+        CHTR & Charter Communications & 42621 \\ \hline
+        CI & CIGNA Corp. & 27941 \\ \hline
+        CINF & Cincinnati Financial &  \\ \hline
+        CL & Colgate-Palmolive & 20883 \\ \hline
+        CLX & The Clorox Company & 25293 \\ \hline
+        CMA & Comerica Inc. & 35034 \\ \hline
+        CMCSA & Comcast Corp. & 42265 \\ \hline
+        CME & CME Group Inc. & 38940 \\ \hline
+        CMG & Chipotle Mexican Grill & 40661 \\ \hline
+        CMI & Cummins Inc. &  \\ \hline
+        CMS & CMS Energy & 36283 \\ \hline
+        CNC & Centene Corporation & 42459 \\ \hline
+        CNP & CenterPoint Energy & 31259 \\ \hline
+        COF & Capital One Financial & 35977 \\ \hline
+        COG & Cabot Oil \& Gas & 39622 \\ \hline
+        COO & The Cooper Companies & 42636 \\ \hline
+        COP & ConocoPhillips & 20883 \\ \hline
+        COST & Costco Wholesale Corp. & 34243 \\ \hline
+        COTY & Coty, Inc & 42646 \\ \hline
+        CPB & Campbell Soup & 20883 \\ \hline
+        CPRT & Copart Inc & 43283 \\ \hline
+        CRM & Salesforce.com & 39706 \\ \hline
+        CSCO & Cisco Systems & 34304 \\ \hline
+        CSX & CSX Corp. & 24745 \\ \hline
+        CTAS & Cintas Corporation & 36951 \\ \hline
+        CTL & CenturyLink Inc & 36244 \\ \hline
+        CTSH & Cognizant Technology Solutions & 39038 \\ \hline
+        CTVA & Corteva & 43619 \\ \hline
+        CTXS & Citrix Systems & 36495 \\ \hline
+        CVS & CVS Health & 20883 \\ \hline
+        CVX & Chevron Corp. & 20883 \\ \hline
+        CXO & Concho Resources & 42422 \\ \hline
+        D & Dominion Energy &  \\ \hline
+        DAL & Delta Air Lines Inc. & 41528 \\ \hline
+        DD & DuPont de Nemours Inc & 43557 \\ \hline
+        DE & Deere \& Co. & 20883 \\ \hline
+        DFS & Discover Financial Services & 39265 \\ \hline
+        DG & Dollar General & 41246 \\ \hline
+        DGX & Quest Diagnostics & 37602 \\ \hline
+        DHI & D. R. Horton & 38525 \\ \hline
+        DHR & Danaher Corp. &  \\ \hline
+        DIS & The Walt Disney Company & 27941 \\ \hline
+        DISCA & Discovery, Inc. (Class A) & 40238 \\ \hline
+        DISCK & Discovery, Inc. (Class C) & 41858 \\ \hline
+        DISH & Dish Network & 42807 \\ \hline
+        DLR & Digital Realty Trust Inc & 42508 \\ \hline
+        DLTR & Dollar Tree & 40896 \\ \hline
+        DOV & Dover Corporation & 31351 \\ \hline
+        DOW & Dow Inc. & 43556 \\ \hline
+        DPZ & Domino's Pizza & 43963 \\ \hline
+        DRE & Duke Realty Corp & 42942 \\ \hline
+        DRI & Darden Restaurants &  \\ \hline
+        DTE & DTE Energy Co. & 20883 \\ \hline
+        DUK & Duke Energy & 27941 \\ \hline
+        DVA & DaVita Inc. & 39660 \\ \hline
+        DVN & Devon Energy & 36768 \\ \hline
+        DXC & DXC Technology & 42829 \\ \hline
+        DXCM & DexCom & 43963 \\ \hline
+        EA & Electronic Arts & 37459 \\ \hline
+        EBAY & eBay Inc. &  \\ \hline
+        ECL & Ecolab Inc. & 32539 \\ \hline
+        ED & Consolidated Edison &  \\ \hline
+        EFX & Equifax Inc. & 35600 \\ \hline
+        EIX & Edison Int'l & 20883 \\ \hline
+        EL & Estée Lauder Companies & 38722 \\ \hline
+        EMN & Eastman Chemical & 34335 \\ \hline
+        EMR & Emerson Electric Company &  \\ \hline
+        EOG & EOG Resources & 36832 \\ \hline
+        EQIX & Equinix & 42083 \\ \hline
+        EQR & Equity Residential & 37228 \\ \hline
+        ES & Eversource Energy &  \\ \hline
+        ESS & Essex Property Trust, Inc. & 41731 \\ \hline
+        ETFC & E*Trade & 38077 \\ \hline
+        ETN & Eaton Corporation &  \\ \hline
+        ETR & Entergy Corp. & 20883 \\ \hline
+        EVRG & Evergy & 43256 \\ \hline
+        EW & Edwards Lifesciences & 40634 \\ \hline
+        EXC & Exelon Corp. & 20883 \\ \hline
+        EXPD & Expeditors & 39365 \\ \hline
+        EXPE & Expedia Group & 39357 \\ \hline
+        EXR & Extra Space Storage & 42388 \\ \hline
+        F & Ford Motor Company & 20883 \\ \hline
+        FANG & Diamondback Energy & 43437 \\ \hline
+        FAST & Fastenal Co & 39706 \\ \hline
+        FB & Facebook, Inc. & 41631 \\ \hline
+        FBHS & Fortune Brands Home \& Security & 42543 \\ \hline
+        FCX & Freeport-McMoRan Inc. &  \\ \hline
+        FDX & FedEx Corporation &  \\ \hline
+        FE & FirstEnergy Corp &  \\ \hline
+        FFIV & F5 Networks & 40532 \\ \hline
+        FIS & Fidelity National Information Services & 39031 \\ \hline
+        FISV & Fiserv Inc & 36983 \\ \hline
+        FITB & Fifth Third Bancorp &  \\ \hline
+        FLIR & FLIR Systems & 39815 \\ \hline
+        FLS & Flowserve Corporation &  \\ \hline
+        FLT & FleetCor Technologies Inc & 43271 \\ \hline
+        FMC & FMC Corporation & 40044 \\ \hline
+        FOX & Fox Corporation (Class B) & 42265 \\ \hline
+        FOXA & Fox Corporation (Class A) & 41456 \\ \hline
+        FRC & First Republic Bank & 43467 \\ \hline
+        FRT & Federal Realty Investment Trust & 42401 \\ \hline
+        FTI & TechnipFMC & 39969 \\ \hline
+        FTNT & Fortinet & 43384 \\ \hline
+        FTV & Fortive Corp & 42552 \\ \hline
+        GD & General Dynamics & 20883 \\ \hline
+        GE & General Electric &  \\ \hline
+        GILD & Gilead Sciences & 38169 \\ \hline
+        GIS & General Mills &  \\ \hline
+        GL & Globe Life Inc. & 32628 \\ \hline
+        GLW & Corning Inc. &  \\ \hline
+        GM & General Motors & 41431 \\ \hline
+        GOOG & Alphabet Inc. (Class C) & 38810 \\ \hline
+        GOOGL & Alphabet Inc. (Class A) & 41732 \\ \hline
+        GPC & Genuine Parts & 27029 \\ \hline
+        GPN & Global Payments Inc. & 42485 \\ \hline
+        GPS & Gap Inc. & 31655 \\ \hline
+        GRMN & Garmin Ltd. & 41255 \\ \hline
+        GS & Goldman Sachs Group & 37459 \\ \hline
+        GWW & Grainger (W.W.) Inc. &  \\ \hline
+        HAL & Halliburton Co. & 20883 \\ \hline
+        HAS & Hasbro Inc. & 30955 \\ \hline
+        HBAN & Huntington Bancshares &  \\ \hline
+        HBI & Hanesbrands Inc & 42083 \\ \hline
+        HCA & HCA Healthcare & 42031 \\ \hline
+        HD & Home Depot & 32233 \\ \hline
+        HES & Hess Corporation &  \\ \hline
+        HFC & HollyFrontier Corp & 43269 \\ \hline
+        HIG & Hartford Financial Svc.Gp. & 20883 \\ \hline
+        HII & Huntington Ingalls Industries & 43103 \\ \hline
+        HLT & Hilton Worldwide Holdings Inc & 42905 \\ \hline
+        HOLX & Hologic & 42459 \\ \hline
+        HON & Honeywell Int'l Inc. & 23467 \\ \hline
+        HPE & Hewlett Packard Enterprise & 42310 \\ \hline
+        HPQ & HP Inc. & 27394 \\ \hline
+        HRB & H\&R Block & 31746 \\ \hline
+        HRL & Hormel Foods Corp. & 39876 \\ \hline
+        HSIC & Henry Schein & 42080 \\ \hline
+        HST & Host Hotels \& Resorts &  \\ \hline
+        HSY & The Hershey Company & 20883 \\ \hline
+        HUM & Humana Inc. &  \\ \hline
+        HWM & Howmet Aerospace & 23467 \\ \hline
+        IBM & International Business Machines & 20883 \\ \hline
+        ICE & Intercontinental Exchange & 39351 \\ \hline
+        IDXX & IDEXX Laboratories & 42740 \\ \hline
+        IEX & IDEX Corporation & 43686 \\ \hline
+        IFF & International Flavors \& Fragrances & 27850 \\ \hline
+        ILMN & Illumina Inc & 42327 \\ \hline
+        INCY & Incyte & 42794 \\ \hline
+        INFO & IHS Markit Ltd. & 42888 \\ \hline
+        INTC & Intel Corp. & 28125 \\ \hline
+        INTU & Intuit Inc. &  \\ \hline
+        IP & International Paper & 20883 \\ \hline
+        IPG & Interpublic Group & 33878 \\ \hline
+        IPGP & IPG Photonics Corp. & 43166 \\ \hline
+        IQV & IQVIA Holdings Inc. & 42976 \\ \hline
+        IR & Ingersoll Rand & 43893 \\ \hline
+        IRM & Iron Mountain Incorporated & 39819 \\ \hline
+        ISRG & Intuitive Surgical Inc. & 39601 \\ \hline
+        IT & Gartner Inc & 42830 \\ \hline
+        ITW & Illinois Tool Works & 31471 \\ \hline
+        IVZ & Invesco Ltd. & 39681 \\ \hline
+        J & Jacobs Engineering Group & 39381 \\ \hline
+        JBHT & J. B. Hunt Transport Services & 42186 \\ \hline
+        JCI & Johnson Controls International & 40417 \\ \hline
+        JKHY & Jack Henry \& Associates & 43417 \\ \hline
+        JNJ & Johnson \& Johnson & 26845 \\ \hline
+        JNPR & Juniper Networks &  \\ \hline
+        JPM & JPMorgan Chase \& Co. & 27575 \\ \hline
+        K & Kellogg Co. &  \\ \hline
+        KEY & KeyCorp & 34394 \\ \hline
+        KEYS & Keysight Technologies & 43410 \\ \hline
+        KHC & Kraft Heinz Co & 42191 \\ \hline
+        KIM & Kimco Realty & 38811 \\ \hline
+        KLAC & KLA Corporation &  \\ \hline
+        KMB & Kimberly-Clark & 20883 \\ \hline
+        KMI & Kinder Morgan & 41054 \\ \hline
+        KMX & Carmax Inc & 40357 \\ \hline
+        KO & Coca-Cola Company & 20883 \\ \hline
+        KR & Kroger Co. & 20883 \\ \hline
+        KSS & Kohl's Corp. &  \\ \hline
+        KSU & Kansas City Southern & 41418 \\ \hline
+        L & Loews Corp. &  \\ \hline
+        LB & L Brands Inc. & 30589 \\ \hline
+        LDOS & Leidos Holdings & 43686 \\ \hline
+        LEG & Leggett \& Platt &  \\ \hline
+        LEN & Lennar Corp. & 38629 \\ \hline
+        LH & Laboratory Corp. of America Holding &  \\ \hline
+        LHX & L3Harris Technologies &  \\ \hline
+        LIN & Linde plc & 33786 \\ \hline
+        LKQ & LKQ Corporation & 42513 \\ \hline
+        LLY & Lilly (Eli) \& Co. & 25933 \\ \hline
+        LMT & Lockheed Martin Corp. &  \\ \hline
+        LNC & Lincoln National & 27941 \\ \hline
+        LNT & Alliant Energy Corp & 42552 \\ \hline
+        LOW & Lowe's Cos. & 30741 \\ \hline
+        LRCX & Lam Research & 41089 \\ \hline
+        LUV & Southwest Airlines & 34516 \\ \hline
+        LVS & Las Vegas Sands & 43741 \\ \hline
+        LW & Lamb Weston Holdings Inc & 43437 \\ \hline
+        LYB & LyondellBasell & 41157 \\ \hline
+        LYV & Live Nation Entertainment & 43822 \\ \hline
+        MA & Mastercard Inc. & 39647 \\ \hline
+        MAA & Mid-America Apartments & 42706 \\ \hline
+        MAR & Marriott Int'l. &  \\ \hline
+        MAS & Masco Corp. &  \\ \hline
+        MCD & McDonald's Corp. & 25749 \\ \hline
+        MCHP & Microchip Technology & 39332 \\ \hline
+        MCK & McKesson Corp. &  \\ \hline
+        MCO & Moody's Corp &  \\ \hline
+        MDLZ & Mondelez International & 41184 \\ \hline
+        MDT & Medtronic plc &  \\ \hline
+        MET & MetLife Inc. &  \\ \hline
+        MGM & MGM Resorts International & 42942 \\ \hline
+        MHK & Mohawk Industries & 41631 \\ \hline
+        MKC & McCormick \& Co. &  \\ \hline
+        MKTX & MarketAxess & 43647 \\ \hline
+        MLM & Martin Marietta Materials & 41822 \\ \hline
+        MMC & Marsh \& McLennan & 32020 \\ \hline
+        MMM & 3M Company &  \\ \hline
+        MNST & Monster Beverage & 41088 \\ \hline
+        MO & Altria Group Inc & 20883 \\ \hline
+        MOS & The Mosaic Company & 40812 \\ \hline
+        MPC & Marathon Petroleum & 40725 \\ \hline
+        MRK & Merck \& Co. &  \\ \hline
+        MRO & Marathon Oil Corp. & 33359 \\ \hline
+        MS & Morgan Stanley &  \\ \hline
+        MSCI & MSCI Inc & 43194 \\ \hline
+        MSFT & Microsoft Corp. & 34486 \\ \hline
+        MSI & Motorola Solutions Inc. &  \\ \hline
+        MTB & M\&T Bank Corp. &  \\ \hline
+        MTD & Mettler Toledo & 42619 \\ \hline
+        MU & Micron Technology & 34604 \\ \hline
+        MXIM & Maxim Integrated Products Inc & 43437 \\ \hline
+        MYL & Mylan N.V. & 38100 \\ \hline
+        NBL & Noble Energy & 39363 \\ \hline
+        NCLH & Norwegian Cruise Line Holdings & 43021 \\ \hline
+        NDAQ & Nasdaq, Inc. & 39743 \\ \hline
+        NEE & NextEra Energy & 27941 \\ \hline
+        NEM & Newmont Corporation & 25384 \\ \hline
+        NFLX & Netflix Inc. & 40532 \\ \hline
+        NI & NiSource Inc. &  \\ \hline
+        NKE & Nike, Inc. & 32477 \\ \hline
+        NLOK & NortonLifeLock & 37705 \\ \hline
+        NLSN & Nielsen Holdings & 41464 \\ \hline
+        NOC & Northrop Grumman & 31228 \\ \hline
+        NOV & National Oilwell Varco Inc. & 38425 \\ \hline
+        NOW & ServiceNow & 43790 \\ \hline
+        NRG & NRG Energy & 40207 \\ \hline
+        NSC & Norfolk Southern Corp. &  \\ \hline
+        NTAP & NetApp & 36336 \\ \hline
+        NTRS & Northern Trust Corp. &  \\ \hline
+        NUE & Nucor Corp. & 31167 \\ \hline
+        NVDA & Nvidia Corporation & 37225 \\ \hline
+        NVR & NVR, Inc. & 43734 \\ \hline
+        NWL & Newell Brands & 32628 \\ \hline
+        NWS & News Corp. Class B & 42265 \\ \hline
+        NWSA & News Corp. Class A & 41487 \\ \hline
+        O & Realty Income Corporation & 42101 \\ \hline
+        ODFL & Old Dominion Freight Line & 43808 \\ \hline
+        OKE & ONEOK & 40252 \\ \hline
+        OMC & Omnicom Group &  \\ \hline
+        ORCL & Oracle Corp. & 32751 \\ \hline
+        ORLY & O'Reilly Automotive &  \\ \hline
+        OTIS & Otis Worldwide & 43924 \\ \hline
+        OXY & Occidental Petroleum & 30316 \\ \hline
+        PAYC & Paycom & 43858 \\ \hline
+        PAYX & Paychex Inc. &  \\ \hline
+        PBCT & People's United Financial & 39765 \\ \hline
+        PCAR & PACCAR Inc. & 29586 \\ \hline
+        PEAK & Healthpeak Properties & 39538 \\ \hline
+        PEG & Public Service Enterprise Group (PSEG) &  \\ \hline
+        PEP & PepsiCo Inc. & 20883 \\ \hline
+        PFE & Pfizer Inc. & 20883 \\ \hline
+        PFG & Principal Financial Group & 37459 \\ \hline
+        PG & Procter \& Gamble & 20883 \\ \hline
+        PGR & Progressive Corp. & 35646 \\ \hline
+        PH & Parker-Hannifin &  \\ \hline
+        PHM & PulteGroup & 30802 \\ \hline
+        PKG & Packaging Corporation of America & 42942 \\ \hline
+        PKI & PerkinElmer & 31198 \\ \hline
+        PLD & Prologis & 37819 \\ \hline
+        PM & Philip Morris International & 39538 \\ \hline
+        PNC & PNC Financial Services & 32263 \\ \hline
+        PNR & Pentair plc & 41183 \\ \hline
+        PNW & Pinnacle West Capital &  \\ \hline
+        PPG & PPG Industries & 20883 \\ \hline
+        PPL & PPL Corp. &  \\ \hline
+        PRGO & Perrigo & 40896 \\ \hline
+        PRU & Prudential Financial & 37459 \\ \hline
+        PSA & Public Storage & 38583 \\ \hline
+        PSX & Phillips 66 & 41030 \\ \hline
+        PVH & PVH Corp. & 41320 \\ \hline
+        PWR & Quanta Services Inc. &  \\ \hline
+        PXD & Pioneer Natural Resources & 39715 \\ \hline
+        PYPL & PayPal & 42205 \\ \hline
+        QCOM & QUALCOMM Inc. &  \\ \hline
+        QRVO & Qorvo & 42166 \\ \hline
+        RCL & Royal Caribbean Group & 41978 \\ \hline
+        RE & Everest Re Group Ltd. & 42905 \\ \hline
+        REG & Regency Centers Corporation & 42796 \\ \hline
+        REGN & Regeneron Pharmaceuticals & 41395 \\ \hline
+        RF & Regions Financial Corp. & 36035 \\ \hline
+        RHI & Robert Half International & 36865 \\ \hline
+        RJF & Raymond James Financial Inc. & 42814 \\ \hline
+        RL & Ralph Lauren Corporation & 39115 \\ \hline
+        RMD & ResMed & 42942 \\ \hline
+        ROK & Rockwell Automation Inc. &  \\ \hline
+        ROL & Rollins Inc. & 43374 \\ \hline
+        ROP & Roper Technologies &  \\ \hline
+        ROST & Ross Stores & 40168 \\ \hline
+        RSG & Republic Services Inc & 39787 \\ \hline
+        RTX & Raytheon Technologies &  \\ \hline
+        SBAC & SBA Communications & 42979 \\ \hline
+        SBUX & Starbucks Corp. &  \\ \hline
+        SCHW & Charles Schwab Corporation & 35583 \\ \hline
+        SEE & Sealed Air & 20883 \\ \hline
+        SHW & Sherwin-Williams & 23558 \\ \hline
+        SIVB & SVB Financial & 43178 \\ \hline
+        SJM & JM Smucker &  \\ \hline
+        SLB & Schlumberger Ltd. & 23832 \\ \hline
+        SLG & SL Green Realty & 42083 \\ \hline
+        SNA & Snap-on & 30224 \\ \hline
+        SNPS & Synopsys Inc. & 42810 \\ \hline
+        SO & Southern Company & 20883 \\ \hline
+        SPG & Simon Property Group Inc & 37433 \\ \hline
+        SPGI & S\&P Global, Inc. &  \\ \hline
+        SRE & Sempra Energy &  \\ \hline
+        STE & STERIS plc & 43822 \\ \hline
+        STT & State Street Corp. &  \\ \hline
+        STX & Seagate Technology & 41092 \\ \hline
+        STZ & Constellation Brands & 38534 \\ \hline
+        SWK & Stanley Black \& Decker &  \\ \hline
+        SWKS & Skyworks Solutions & 42075 \\ \hline
+        SYF & Synchrony Financial & 42326 \\ \hline
+        SYK & Stryker Corp. & 36872 \\ \hline
+        SYY & Sysco Corp. & 31777 \\ \hline
+        T & AT\&T Inc. & 1983-11-30 (1957-03-04) \\ \hline
+        TAP & Molson Coors Beverage Company & 27941 \\ \hline
+        TDG & TransDigm Group & 42524 \\ \hline
+        TDY & Teledyne Technologies & 44004 \\ \hline
+        TEL & TE Connectivity Ltd. & 40833 \\ \hline
+        TFC & Truist Financial &  \\ \hline
+        TFX & Teleflex & 43483 \\ \hline
+        TGT & Target Corp. & 28125 \\ \hline
+        TIF & Tiffany \& Co. & 36698 \\ \hline
+        TJX & TJX Companies Inc. & 31320 \\ \hline
+        TMO & Thermo Fisher Scientific &  \\ \hline
+        TMUS & T-Mobile US & 43661 \\ \hline
+        TPR & Tapestry, Inc. &  \\ \hline
+        TROW & T. Rowe Price Group &  \\ \hline
+        TRV & The Travelers Companies Inc. & 37489 \\ \hline
+        TSCO & Tractor Supply Company & 41663 \\ \hline
+        TSN & Tyson Foods &  \\ \hline
+        TT & Trane Technologies plc & 40499 \\ \hline
+        TTWO & Take-Two Interactive & 43178 \\ \hline
+        TWTR & Twitter, Inc. & 43258 \\ \hline
+        TXN & Texas Instruments &  \\ \hline
+        TXT & Textron Inc. & 28855 \\ \hline
+        TYL & Tyler Technologies & 44004 \\ \hline
+        UA & Under Armour (Class C) & 42468 \\ \hline
+        UAA & Under Armour (Class A) & 41760 \\ \hline
+        UAL & United Airlines Holdings & 42250 \\ \hline
+        UDR & UDR, Inc. & 42436 \\ \hline
+        UHS & Universal Health Services & 41902 \\ \hline
+        ULTA & Ulta Beauty & 42478 \\ \hline
+        UNH & United Health Group Inc. & 34516 \\ \hline
+        UNM & Unum Group &  \\ \hline
+        UNP & Union Pacific Corp & 20883 \\ \hline
+        UPS & United Parcel Service & 37459 \\ \hline
+        URI & United Rentals, Inc. & 41902 \\ \hline
+        USB & U.S. Bancorp &  \\ \hline
+        V & Visa Inc. &  \\ \hline
+        VAR & Varian Medical Systems & 39125 \\ \hline
+        VFC & VF Corporation & 29036 \\ \hline
+        VIAC & ViacomCBS &  \\ \hline
+        VLO & Valero Energy &  \\ \hline
+        VMC & Vulcan Materials & 36341 \\ \hline
+        VNO & Vornado Realty Trust &  \\ \hline
+        VRSK & Verisk Analytics & 42285 \\ \hline
+        VRSN & Verisign Inc. & 38749 \\ \hline
+        VRTX & Vertex Pharmaceuticals Inc & 41540 \\ \hline
+        VTR & Ventas Inc & 39876 \\ \hline
+        VZ & Verizon Communications & 30650 \\ \hline
+        WAB & Wabtec Corporation & 43523 \\ \hline
+        WAT & Waters Corporation &  \\ \hline
+        WBA & Walgreens Boots Alliance & 29220 \\ \hline
+        WDC & Western Digital & 39995 \\ \hline
+        WEC & WEC Energy Group & 39752 \\ \hline
+        WELL & Welltower Inc. & 39843 \\ \hline
+        WFC & Wells Fargo & 27941 \\ \hline
+        WHR & Whirlpool Corp. &  \\ \hline
+        WLTW & Willis Towers Watson & 42374 \\ \hline
+        WM & Waste Management Inc. &  \\ \hline
+        WMB & Williams Companies & 27484 \\ \hline
+        WMT & Walmart &  \\ \hline
+        WRB & W. R. Berkley Corporation & 43804 \\ \hline
+        WRK & WestRock &  \\ \hline
+        WST & West Pharmaceutical Services & 43973 \\ \hline
+        WU & Western Union Co & 38989 \\ \hline
+        WY & Weyerhaeuser &  \\ \hline
+        WYNN & Wynn Resorts Ltd & 39766 \\ \hline
+        XEL & Xcel Energy Inc & 20883 \\ \hline
+        XLNX & Xilinx &  \\ \hline
+        XOM & Exxon Mobil Corp. & 20883 \\ \hline
+        XRAY & Dentsply Sirona & 39766 \\ \hline
+        XRX & Xerox &  \\ \hline
+        XYL & Xylem Inc. & 40848 \\ \hline
+        YUM & Yum! Brands Inc & 35709 \\ \hline
+        ZBH & Zimmer Biomet Holdings &  \\ \hline
+        ZBRA & Zebra Technologies & 43822 \\ \hline
+        ZION & Zions Bancorp & 37064 \\ \hline
+        ZTS & Zoetis & 41446 \\ \hline
+    \end{array}
+    
 
 model 1 : [284.0, 314.0, 307.0, 333.0, 1159.1797068017659]
 
@@ -854,6 +1489,22 @@ model 4 : [287.0, 321.0, 300.0, 330.0, 1240.028072178535]
 model 5 : [287.0, 339.0, 282.0, 330.0, 1193.8006199628269]
 
 model 6 : [292.0, 316.0, 305.0, 325.0, 1365.058971850805]
+
+vgg16 [370.0, 140.0, 316.0, 174.0, 1072.1526010161112]
+
+
+LABEL:
+
+model 1 : [314.0, 169.0, 288.0, 229.0, 1021.9447293720856]
+
+model 2 : [317.0, 165.0, 291.0, 227.0, 1215.1748240785867]
+
+model 4 : [324.0, 171.0, 285.0, 220.0, 1045.2512279232878]
+
+model 5 : [307.0, 163.0, 294.0, 236.0, 1227.1083253134184]
+
+ALL MODELS V1 [284.0, 224.0, 232.0, 260.0, 1170.3444808293534]
+
 
 
 \end{onehalfspace}
